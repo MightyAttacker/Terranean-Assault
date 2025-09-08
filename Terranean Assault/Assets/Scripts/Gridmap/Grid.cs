@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
-public class Grid
+public class Grid<T>
 {
     private int width;
     private int height;
@@ -53,7 +53,6 @@ public class Grid
         Debug.DrawLine(GetWorldPosition(0, height), GetWorldPosition(width, height), Color.white, 100f);
         Debug.DrawLine(GetWorldPosition(width, 0), GetWorldPosition(width, height), Color.white, 100f);
 
-        // Test value set
         SetValue(2, 1, 56);
     }
 
