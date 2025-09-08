@@ -3,22 +3,21 @@ using CodeMonkey.Utils;
 using System.Runtime.CompilerServices;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using System;
 
-public class Grid<T>
+public class Grid
 {
     private int width;
     private int height;
     private float cellSize;
-    private Vector3 originPosition;
     private int[,] gridArray;
     private TextMesh[,] debugTextArray;
 
-    public Grid(int width, int height, float cellSize, Vector3 originPosition)
+    public Grid(int width, int height, float cellSize)
     {
         this.width = width;
         this.height = height;
         this.cellSize = cellSize;
-        this.originPosition = originPosition;
 
         gridArray = new int[width, height];
         debugTextArray = new TextMesh[width, height];
