@@ -3,13 +3,12 @@ using CodeMonkey.Utils;
 
 public class Testing : MonoBehaviour
 {
-    private Grid<int> grid;
+    private Grid grid;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        grid = new Grid<int>(44, 30, 1f, new Vector3(-10, -20), (Grid<int> g, int x, int y) => 0
-        );
+        grid = new Grid(44, 30, 1f, new Vector3(-10, -20));
     }
 
     // Update is called once per frame
