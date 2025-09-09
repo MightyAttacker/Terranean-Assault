@@ -1,15 +1,13 @@
 using UnityEngine;
 using CodeMonkey.Utils;
-using Gridmap;
 using System;
-
 public class Testing : MonoBehaviour
 {
     private Grid grid;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        Pathfinding pathfinding = new Pathfinding(10, 10);
+        Pathfinding pathfinding = new Pathfinding(44, 30);
         //grid = new Grid(44, 30, 1f, new Vector3(-10, -20), (g, x, y) => 0);
     }
 

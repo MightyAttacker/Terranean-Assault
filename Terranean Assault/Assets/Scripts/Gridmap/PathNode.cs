@@ -1,8 +1,7 @@
 using UnityEngine;
-using Gridmap;
 public class PathNode
 {
-    private Grid<PathNode> grid;
+    private GridMapGrid<PathNode> grid;
     private int x;
     private int y;
 
@@ -12,7 +11,7 @@ public class PathNode
 
     public PathNode cameFromNode;
 
-    public PathNode(Grid<PathNode> grid, int x, int y)
+    public PathNode(GridMapGrid<PathNode> grid, int x, int y)
     {
         this.grid = grid;
         this.x = x;

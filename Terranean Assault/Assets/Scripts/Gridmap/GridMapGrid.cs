@@ -4,14 +4,13 @@ using System.Runtime.CompilerServices;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 using System;
-
 public class GridMapGrid<TGridObject>
 {
     private int width;
     private int height;
     private float cellSize;
     private Vector3 originPosition;
-    private int[,] gridArray;
+    private TGridObject[,] gridArray;
     private TextMesh[,] debugTextArray;
 
     public GridMapGrid(int width, int height, float cellSize, Vector3 originPosition, Func<GridMapGrid<TGridObject>, int, int, TGridObject> createGridObject)
@@ -21,13 +20,14 @@ public class GridMapGrid<TGridObject>
         this.cellSize = cellSize;
         this.originPosition = originPosition;
 
-        gridArray = new int[width, height];
+        gridArray = new TGridObject[width, height];
         debugTextArray = new TextMesh[width, height];
 
         for (int x = 0; x < gridArray.GetLength(0); x++)
         {
             for (int y = 0; y < gridArray.GetLength(1); y++)
             {
+                gridArray[x, y] = createGridObject(this, x, y);
                 // Create text mesh
                 TextMesh textMesh = UtilsClass.CreateWorldText(
                     gridArray[x, y].ToString(),
@@ -54,7 +54,6 @@ public class GridMapGrid<TGridObject>
         Debug.DrawLine(GetWorldPosition(0, height), GetWorldPosition(width, height), Color.white, 100f);
         Debug.DrawLine(GetWorldPosition(width, 0), GetWorldPosition(width, height), Color.white, 100f);
 
-        SetValue(2, 1, 56);
     }
 
 
@@ -69,23 +68,22 @@ public class GridMapGrid<TGridObject>
         y = Mathf.FloorToInt((worldPosition - originPosition).y / cellSize);
     }
 
-    public void SetValue(int x, int y, int value)
+    public void SetValue(int x, int y, TGridObject  value)
     {
         if (x >= 0 && y >= 0 && x < width && y < height)
         {
             gridArray[x, y] = value;
-            debugTextArray[x, y].text = gridArray[x, y].ToString();
+            debugTextArray[x, y].text = value?.ToString() ?? "";
         }
     }
 
-    public void SetValue(Vector3 worldPosition, int value)
+    public void SetValue(Vector3 worldPosition, TGridObject  value)
     {
-        int x, y;
-        GetXY(worldPosition, out x, out y);
+        GetXY(worldPosition, out int x, out int y);
         SetValue(x, y, value);
     }
 
-    public int GetValue(int x, int y)
+    public TGridObject GetValue(int x, int y)
     {
         if (x >= 0 && y >= 0 && x < width && y < height)
         {
@@ -93,11 +91,11 @@ public class GridMapGrid<TGridObject>
         }
         else
         {
-            return 0;
+            return default(TGridObject);
         }
     }
 
-    public int GetValue(Vector3 worldPosition) {
+    public TGridObject  GetValue(Vector3 worldPosition) {
         int x, y;
         GetXY(worldPosition, out x, out y);
         return GetValue(x, y);
