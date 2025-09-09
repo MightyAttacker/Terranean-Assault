@@ -1,4 +1,4 @@
-/*using UnityEngine;
+using UnityEngine;
 
 public class Pathfinding
 {
@@ -14,4 +14,3 @@ public class Pathfinding
             (Grid<PathNode> g, int x, int y) => new PathNode(g, x, y));
     }
 }
-*/
