@@ -1,4 +1,4 @@
-﻿/* 
+/* 
     ------------------- Code Monkey -------------------
 
     Thank you for downloading the Code Monkey Utilities
@@ -39,12 +39,17 @@ namespace CodeMonkey.Utils {
         private static Transform cachedCanvasTransform;
         public static Transform GetCanvasTransform() {
             if (cachedCanvasTransform == null) {
-                Canvas canvas = MonoBehaviour.FindObjectOfType<Canvas>();
+                Canvas canvas = UnityEngine.Object.FindFirstObjectByType<Canvas>();
                 if (canvas != null) {
                     cachedCanvasTransform = canvas.transform;
                 }
             }
             return cachedCanvasTransform;
+        }
+
+        private static T FindObjectOfType<T>()
+        {
+            throw new NotImplementedException();
         }
 
         // Get Default Unity Font, used in text objects if no font given

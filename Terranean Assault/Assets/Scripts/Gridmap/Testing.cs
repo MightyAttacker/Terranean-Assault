@@ -1,17 +1,18 @@
 using UnityEngine;
 using CodeMonkey.Utils;
-
+using System;
 public class Testing : MonoBehaviour
 {
     private Grid grid;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        grid = new Grid(44, 30, 1f, new Vector3(-10, -20));
+        Pathfinding pathfinding = new Pathfinding(44, 30);
+        //grid = new Grid(44, 30, 1f, new Vector3(-10, -20), (g, x, y) => 0);
     }
 
     // Update is called once per frame
-    void Update()
+    /*void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
@@ -21,5 +22,5 @@ public class Testing : MonoBehaviour
         {
             Debug.Log(grid.GetValue(UtilsClass.GetMouseWorldPosition()));
         }
-    }
+    }*/
 }
