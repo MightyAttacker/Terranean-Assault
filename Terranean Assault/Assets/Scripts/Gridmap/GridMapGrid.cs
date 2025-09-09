@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.UIElements;
 using System;
 
-public class Grid
+public class GridMapGrid<TGridObject>
 {
     private int width;
     private int height;
@@ -14,7 +14,7 @@ public class Grid
     private int[,] gridArray;
     private TextMesh[,] debugTextArray;
 
-    public Grid(int width, int height, float cellSize, Vector3 originPosition)
+    public GridMapGrid(int width, int height, float cellSize, Vector3 originPosition, Func<GridMapGrid<TGridObject>, int, int, TGridObject> createGridObject)
     {
         this.width = width;
         this.height = height;
