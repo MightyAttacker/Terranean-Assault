@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -53,7 +52,7 @@ public class Pathfinding {
         for (int x = 0; x < grid.GetWidth(); x++) {
             for (int y = 0; y < grid.GetHeight(); y++) {
                 PathNode pathNode = grid.GetGridObject(x, y);
-                pathNode.gCost = 99999999;
+                pathNode.gCost = int.MaxValue;
                 pathNode.CalculateFCost();
                 pathNode.cameFromNode = null;
             }
@@ -104,6 +103,7 @@ public class Pathfinding {
         return null;
     }
 
+    // Original method, includes diagonals
     private List<PathNode> GetNeighbourList(PathNode currentNode) {
         List<PathNode> neighbourList = new List<PathNode>();
 
@@ -129,6 +129,18 @@ public class Pathfinding {
         if (currentNode.y + 1 < grid.GetHeight()) neighbourList.Add(GetNode(currentNode.x, currentNode.y + 1));
 
         return neighbourList;
+    }
+
+    // New method: neighbors **without diagonals**
+    public List<PathNode> GetNeighborsNonDiagonal(PathNode currentNode) {
+        List<PathNode> neighborList = new List<PathNode>();
+
+        if (currentNode.x - 1 >= 0) neighborList.Add(GetNode(currentNode.x - 1, currentNode.y));
+        if (currentNode.x + 1 < grid.GetWidth()) neighborList.Add(GetNode(currentNode.x + 1, currentNode.y));
+        if (currentNode.y - 1 >= 0) neighborList.Add(GetNode(currentNode.x, currentNode.y - 1));
+        if (currentNode.y + 1 < grid.GetHeight()) neighborList.Add(GetNode(currentNode.x, currentNode.y + 1));
+
+        return neighborList;
     }
 
     public PathNode GetNode(int x, int y) {
