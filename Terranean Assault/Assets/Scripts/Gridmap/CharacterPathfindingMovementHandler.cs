@@ -1,16 +1,19 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using CodeMonkey.Utils;
-using NUnit.Framework;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class CharacterPathfindingMovementHandler : MonoBehaviour {
+public class CharacterPathfindingMovementHandler : MonoBehaviour
+{
+    public event System.Action OnMovementStarted;
+    public event System.Action OnMovementStopped;
 
-    private const float speed = 5f; // Changed to 5f for smoother units
+    private const float speed = 5f; // movement speed
     private int currentPathIndex;
     private List<Vector3> pathVectorList;
     private Rigidbody2D rb;
+    private bool isMoving = false;
+
     [SerializeField] private float maxMoveDistance = 6f;
 
     public float GetMaxMoveDistance()
@@ -23,69 +26,90 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    private void Update() {
+    private void Update()
+    {
         HandleMovement();
     }
 
-private void HandleMovement() {
-    if (pathVectorList != null && currentPathIndex < pathVectorList.Count) {
-        Vector3 targetPosition = pathVectorList[currentPathIndex];
-        Vector3 currentPosition = transform.position;
+    private void HandleMovement()
+    {
+        if (pathVectorList != null && currentPathIndex < pathVectorList.Count)
+        {
+            if (!isMoving)
+            {
+                isMoving = true;
+                OnMovementStarted?.Invoke();
+            }
 
-        Vector3 moveDir = (targetPosition - currentPosition);
-        float distanceToTarget = moveDir.magnitude;
+            Vector3 targetPosition = pathVectorList[currentPathIndex];
+            Vector3 currentPosition = transform.position;
 
-        if (distanceToTarget > 0f) {
-            moveDir /= distanceToTarget; // normalize
+            Vector3 moveDir = (targetPosition - currentPosition);
+            float distanceToTarget = moveDir.magnitude;
 
-            float moveDistance = speed * Time.deltaTime;
+            if (distanceToTarget > 0f)
+            {
+                moveDir /= distanceToTarget; // normalize
 
-            // Clamp to not overshoot
-            float distanceToMove = Mathf.Min(moveDistance, distanceToTarget);
+                float moveDistance = speed * Time.deltaTime;
 
-            transform.position += moveDir * distanceToMove;
+                // Clamp to not overshoot
+                float distanceToMove = Mathf.Min(moveDistance, distanceToTarget);
 
-            // If we've reached or passed the target position, move to next node
-            if (distanceToMove >= distanceToTarget) {
+                transform.position += moveDir * distanceToMove;
+
+                // If we've reached or passed the target position, move to next node
+                if (distanceToMove >= distanceToTarget)
+                {
+                    currentPathIndex++;
+                    if (currentPathIndex >= pathVectorList.Count)
+                    {
+                        StopMoving();
+                    }
+                }
+            }
+            else
+            {
                 currentPathIndex++;
-                if (currentPathIndex >= pathVectorList.Count) {
+                if (currentPathIndex >= pathVectorList.Count)
+                {
                     StopMoving();
                 }
             }
-        } else {
-            currentPathIndex++;
-            if (currentPathIndex >= pathVectorList.Count) {
-                StopMoving();
-            }
         }
     }
-}
 
-
-    private void StopMoving() {
+    private void StopMoving()
+    {
         pathVectorList = null;
+        if (isMoving)
+        {
+            isMoving = false;
+            OnMovementStopped?.Invoke();
+        }
     }
 
-    public Vector3 GetPosition() {
+    public Vector3 GetPosition()
+    {
         return transform.position;
     }
 
-    public void SetTargetPosition(Vector3 targetPosition) {
-    currentPathIndex = 0;
-    pathVectorList = Pathfinding.Instance.FindPath(GetPosition(), targetPosition);
+    public void SetTargetPosition(Vector3 targetPosition)
+    {
+        currentPathIndex = 0;
+        pathVectorList = Pathfinding.Instance.FindPath(GetPosition(), targetPosition);
 
-    if (pathVectorList != null && pathVectorList.Count > 1) {
-        pathVectorList.RemoveAt(0); // remove current position node, optional
+        if (pathVectorList != null && pathVectorList.Count > 1)
+        {
+            pathVectorList.RemoveAt(0); // remove current position node, optional
+        }
+
+        // No need to add targetPosition explicitly because path ends there
+        // Optionally snap targetPosition to last node for smooth movement
+        if (pathVectorList != null && pathVectorList.Count > 0)
+        {
+            Vector3 lastNodePos = pathVectorList[pathVectorList.Count - 1];
+            pathVectorList[pathVectorList.Count - 1] = lastNodePos;
+        }
     }
-
-    // Use the last node in the path as the exact target position
-if (pathVectorList != null && pathVectorList.Count > 0) {
-    // No need to add targetPosition because path ends there
-    // Optionally snap targetPosition to last node for smooth movement
-    Vector3 lastNodePos = pathVectorList[pathVectorList.Count - 1];
-    pathVectorList[pathVectorList.Count - 1] = lastNodePos;
-}
-
-}
-
 }

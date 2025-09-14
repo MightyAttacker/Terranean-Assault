@@ -17,12 +17,16 @@ public class Testing : MonoBehaviour
         pathfindingDebugStepVisual.Setup(pathfinding.GetGrid());
         pathfindingVisual.SetGrid(pathfinding.GetGrid());
 
-        if (characters.Count > 0)
+        // Subscribe to movement events for all characters
+        foreach (var character in characters)
         {
-            selectedCharacter = characters[0];
-            Debug.Log($"Initially selected character: {selectedCharacter.name}");
-            HighlightMovementRange(selectedCharacter);
+            character.OnMovementStarted += HandleMovementStarted;
+            character.OnMovementStopped += HandleMovementStopped;
         }
+
+        // Do NOT auto-select any character on start
+        // selectedCharacter = null;
+        // pathfindingVisual.ClearHighlights();
     }
 
     private void Update()
@@ -34,6 +38,11 @@ public class Testing : MonoBehaviour
             if (selectedCharacter != null)
             {
                 TryMoveSelectedCharacter();
+            }
+            else
+            {
+                // No character selected, clear highlights just in case
+                pathfindingVisual.ClearHighlights();
             }
         }
 
@@ -50,6 +59,21 @@ public class Testing : MonoBehaviour
         }
     }
 
+    private void HandleMovementStarted()
+    {
+        // Clear highlights immediately when movement starts
+        pathfindingVisual.ClearHighlights();
+    }
+
+    private void HandleMovementStopped()
+    {
+        // Re-highlight movement range when movement stops for the selected character
+        if (selectedCharacter != null)
+        {
+            HighlightMovementRange(selectedCharacter);
+        }
+    }
+
     private void TrySelectCharacter()
     {
         Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
@@ -63,7 +87,6 @@ public class Testing : MonoBehaviour
                 selectedCharacter = clickedCharacter;
                 Debug.Log($"Selected character: {selectedCharacter.name}");
 
-                // Highlight movement range
                 HighlightMovementRange(selectedCharacter);
             }
         }
@@ -71,7 +94,7 @@ public class Testing : MonoBehaviour
 
     private void TryMoveSelectedCharacter()
     {
-        pathfindingVisual.ClearHighlights();
+        if (selectedCharacter == null) return;
 
         Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
         pathfinding.GetGrid().GetXY(mouseWorldPosition, out int x, out int y);
@@ -109,17 +132,6 @@ public class Testing : MonoBehaviour
 
             Debug.DrawRay(targetCenter, Vector3.up, Color.red, 1f);
             selectedCharacter.SetTargetPosition(targetCenter);
-
-            // Optionally, re-highlight movement after a move
-            Invoke(nameof(RefreshHighlight), 0.1f); // Give time for position update
-        }
-    }
-
-    private void RefreshHighlight()
-    {
-        if (selectedCharacter != null)
-        {
-            HighlightMovementRange(selectedCharacter);
         }
     }
 
@@ -127,10 +139,8 @@ public class Testing : MonoBehaviour
     {
         if (character == null) return;
 
-        // Clear any previous highlights
         pathfindingVisual.ClearHighlights();
 
-        // Get character's grid position
         Vector3 characterWorldPos = character.transform.position;
         pathfinding.GetGrid().GetXY(characterWorldPos, out int charX, out int charY);
 
