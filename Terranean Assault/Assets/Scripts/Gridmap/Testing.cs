@@ -71,6 +71,8 @@ public class Testing : MonoBehaviour
 
     private void TryMoveSelectedCharacter()
     {
+        pathfindingVisual.ClearHighlights();
+
         Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
         pathfinding.GetGrid().GetXY(mouseWorldPosition, out int x, out int y);
 

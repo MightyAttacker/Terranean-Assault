@@ -8,7 +8,7 @@ public class PathfindingVisual : MonoBehaviour
     private Mesh mesh;
     private bool updateMesh;
 
-    private List<GameObject> highlightTiles = new List<GameObject>();
+    private List<GameObject> highlightTiles = new List<GameObject>(); // Only declare once here
 
     [SerializeField] private Sprite highlightSprite; 
 
@@ -84,28 +84,24 @@ public class PathfindingVisual : MonoBehaviour
         }
     }
 
-     private void CreateHighlightTile(Vector3 position, Color color)
+    private void CreateHighlightTile(Vector3 position, Color color)
     {
         GameObject highlight = new GameObject("HighlightTile");
         highlight.transform.position = position;
-
         var sr = highlight.AddComponent<SpriteRenderer>();
-
-        sr.sprite = highlightSprite; // ⬅ Use the serialized sprite
-        sr.color = new Color(color.r, color.g, color.b, 0.5f); // semi-transparent
-        sr.sortingLayerName = "Default"; // or match your Tilemap sorting layer
+        sr.sprite = highlightSprite;
+        sr.color = new Color(color.r, color.g, color.b, 0.5f);
+        sr.sortingLayerName = "Default";
         sr.sortingOrder = 100;
-    }
 
+        highlightTiles.Add(highlight); // Add to list
+    }
 
     public void ClearHighlights()
     {
-        foreach (GameObject go in highlightTiles)
+        foreach (var tile in highlightTiles)
         {
-            if (go != null)
-            {
-                Destroy(go);
-            }
+            Destroy(tile);
         }
         highlightTiles.Clear();
     }
