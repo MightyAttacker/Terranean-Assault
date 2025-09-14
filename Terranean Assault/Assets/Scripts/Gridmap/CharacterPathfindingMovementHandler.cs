@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using CodeMonkey.Utils;
+using NUnit.Framework;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class CharacterPathfindingMovementHandler : MonoBehaviour {
@@ -10,8 +11,15 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour {
     private int currentPathIndex;
     private List<Vector3> pathVectorList;
     private Rigidbody2D rb;
+    [SerializeField] private float maxMoveDistance = 6f;
 
-    private void Awake() {
+    public float GetMaxMoveDistance()
+    {
+        return maxMoveDistance;
+    }
+
+    private void Awake()
+    {
         rb = GetComponent<Rigidbody2D>();
     }
 
