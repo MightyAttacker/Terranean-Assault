@@ -7,11 +7,12 @@ public class Testing : MonoBehaviour
     [SerializeField] private PathfindingDebugStepVisual pathfindingDebugStepVisual;
     [SerializeField] private PathfindingVisual pathfindingVisual;
 
-    // List of all characters you want to manage
     [SerializeField] private List<CharacterPathfindingMovementHandler> characters;
 
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
+
+    private const float MAX_MOVE_DISTANCE = 5f;
 
     private void Start()
     {
@@ -21,18 +22,16 @@ public class Testing : MonoBehaviour
 
         if (characters.Count > 0)
         {
-            selectedCharacter = characters[0]; // Default select first character
+            selectedCharacter = characters[0];
         }
     }
 
     private void Update()
     {
-        // Left click: first try to select a character
         if (Input.GetMouseButtonDown(0))
         {
             TrySelectCharacter();
 
-            // If a character is already selected, move it to clicked position on grid
             if (selectedCharacter != null)
             {
                 TryMoveSelectedCharacter();
@@ -53,7 +52,6 @@ public class Testing : MonoBehaviour
     private void TrySelectCharacter()
     {
         Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
-        // Raycast to see if you clicked a character
         RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
 
         if (hit.collider != null)
@@ -74,16 +72,30 @@ public class Testing : MonoBehaviour
 
     if (!IsWithinGridBounds(x, y)) return;
 
+    // Get grid position of selected character
     Vector3 selectedCharacterWorldPos = selectedCharacter.transform.position;
     pathfinding.GetGrid().GetXY(selectedCharacterWorldPos, out int startX, out int startY);
+
+    float cellSize = pathfinding.GetGrid().GetCellSize();
+    Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
+
+    // Get centered world positions
+    Vector3 characterCenter = new Vector3(startX, startY) * cellSize + cellOffset;
+    Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
+
+    float distance = Vector3.Distance(characterCenter, targetCenter);
+
+    if (distance > MAX_MOVE_DISTANCE)
+    {
+        Debug.Log($"Target too far: {distance:F2} units. Max: {MAX_MOVE_DISTANCE}");
+        return;
+    }
 
     List<PathNode> path = pathfinding.FindPath(startX, startY, x, y);
 
     if (path != null)
     {
-        float cellSize = pathfinding.GetGrid().GetCellSize();
-        Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
-
+        // Debug draw path
         for (int i = 0; i < path.Count - 1; i++)
         {
             Vector3 startPos = new Vector3(path[i].x, path[i].y) * cellSize + cellOffset;
@@ -91,13 +103,10 @@ public class Testing : MonoBehaviour
             Debug.DrawLine(startPos, endPos, Color.green, 1f);
         }
 
-        Vector3 targetPosition = new Vector3(x, y) * cellSize + cellOffset;
-        Debug.DrawRay(targetPosition, Vector3.up, Color.red, 1f);
-
-        selectedCharacter.SetTargetPosition(targetPosition);
+        Debug.DrawRay(targetCenter, Vector3.up, Color.red, 1f);
+        selectedCharacter.SetTargetPosition(targetCenter);
     }
 }
-
 
     private bool IsWithinGridBounds(int x, int y)
     {
