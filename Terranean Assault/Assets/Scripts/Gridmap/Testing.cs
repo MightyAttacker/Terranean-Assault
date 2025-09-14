@@ -24,30 +24,44 @@ public class Testing : MonoBehaviour
             character.OnMovementStopped += HandleMovementStopped;
         }
 
-        // Do NOT auto-select any character on start
-        // selectedCharacter = null;
-        // pathfindingVisual.ClearHighlights();
+        // Start with no character selected
+        selectedCharacter = null;
     }
 
     private void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            TrySelectCharacter();
+            Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
+            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
 
+            if (hit.collider != null)
+            {
+                // Clicked on something - check if it's a character
+                CharacterPathfindingMovementHandler clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+                if (clickedCharacter != null && characters.Contains(clickedCharacter))
+                {
+                    // Select this character and highlight movement range
+                    selectedCharacter = clickedCharacter;
+                    HighlightMovementRange(selectedCharacter);
+                    return; // Done processing click
+                }
+            }
+
+            // If we got here, clicked somewhere else (not a character)
+            // If a character is selected, try to move it to clicked spot
             if (selectedCharacter != null)
             {
                 TryMoveSelectedCharacter();
-            }
-            else
-            {
-                // No character selected, clear highlights just in case
-                pathfindingVisual.ClearHighlights();
             }
         }
 
         if (Input.GetMouseButtonDown(1))
         {
+            // Right click clears selection and highlights
+            selectedCharacter = null;
+            pathfindingVisual.ClearHighlights();
+
             Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
             pathfinding.GetGrid().GetXY(mouseWorldPosition, out int x, out int y);
 
@@ -61,35 +75,15 @@ public class Testing : MonoBehaviour
 
     private void HandleMovementStarted()
     {
-        // Clear highlights immediately when movement starts
+        // Movement started: clear highlights to hide movement range during movement
         pathfindingVisual.ClearHighlights();
     }
 
     private void HandleMovementStopped()
     {
-        // Re-highlight movement range when movement stops for the selected character
-        if (selectedCharacter != null)
-        {
-            HighlightMovementRange(selectedCharacter);
-        }
-    }
-
-    private void TrySelectCharacter()
-    {
-        Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
-        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
-
-        if (hit.collider != null)
-        {
-            CharacterPathfindingMovementHandler clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
-            if (clickedCharacter != null && characters.Contains(clickedCharacter))
-            {
-                selectedCharacter = clickedCharacter;
-                Debug.Log($"Selected character: {selectedCharacter.name}");
-
-                HighlightMovementRange(selectedCharacter);
-            }
-        }
+        // Movement stopped: clear selection and highlights so user can pick next character
+        selectedCharacter = null;
+        pathfindingVisual.ClearHighlights();
     }
 
     private void TryMoveSelectedCharacter()
