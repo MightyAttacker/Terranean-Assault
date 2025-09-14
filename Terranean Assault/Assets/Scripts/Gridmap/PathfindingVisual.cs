@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class PathfindingVisual : MonoBehaviour
 {
-
     private Grid<PathNode> grid;
     private Mesh mesh;
     private bool updateMesh;
+
+    private List<GameObject> highlightTiles = new List<GameObject>(); // Only declare once here
+
+    [SerializeField] private Sprite highlightSprite; 
 
     private void Awake()
     {
@@ -63,9 +66,43 @@ public class PathfindingVisual : MonoBehaviour
         mesh.uv = uv;
         mesh.triangles = triangles;
     }
-    
-    public void ClearVisual() {
-    mesh.Clear();
+
+    public void ClearVisual()
+    {
+        mesh.Clear();
+    }
+
+    // ✅ Highlight nodes in blue
+    public void HighlightNodes(List<PathNode> nodes, Color color)
+    {
+        ClearHighlights();
+
+        foreach (var node in nodes)
+        {
+            Vector3 pos = grid.GetWorldPosition(node.x, node.y) + new Vector3(grid.GetCellSize(), grid.GetCellSize()) * 0.5f;
+            CreateHighlightTile(pos, color);
+        }
+    }
+
+    private void CreateHighlightTile(Vector3 position, Color color)
+    {
+        GameObject highlight = new GameObject("HighlightTile");
+        highlight.transform.position = position;
+        var sr = highlight.AddComponent<SpriteRenderer>();
+        sr.sprite = highlightSprite;
+        sr.color = new Color(color.r, color.g, color.b, 0.5f);
+        sr.sortingLayerName = "Default";
+        sr.sortingOrder = 100;
+
+        highlightTiles.Add(highlight); // Add to list
+    }
+
+    public void ClearHighlights()
+    {
+        foreach (var tile in highlightTiles)
+        {
+            Destroy(tile);
+        }
+        highlightTiles.Clear();
     }
 }
-
