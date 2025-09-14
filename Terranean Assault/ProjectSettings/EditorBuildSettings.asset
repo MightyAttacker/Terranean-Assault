@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Main Menu.unity
     guid: 8258ea0ee51a34f658bf8892dfe0d616
   - enabled: 1
+    path: Assets/Scenes/Load Menu.unity
+    guid: b243cbe044a6a42169dd1ddcc4d8268c
+  - enabled: 1
     path: Assets/Scenes/Terranean Assault.unity
     guid: ffcb92f9de0a4664aa2a36880ffffefd
   m_configObjects: {}
