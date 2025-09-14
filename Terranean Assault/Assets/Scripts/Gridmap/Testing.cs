@@ -21,6 +21,7 @@ public class Testing : MonoBehaviour
         {
             selectedCharacter = characters[0];
             Debug.Log($"Initially selected character: {selectedCharacter.name}");
+            HighlightMovementRange(selectedCharacter);
         }
     }
 
@@ -56,11 +57,14 @@ public class Testing : MonoBehaviour
 
         if (hit.collider != null)
         {
-            var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+            CharacterPathfindingMovementHandler clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
                 selectedCharacter = clickedCharacter;
                 Debug.Log($"Selected character: {selectedCharacter.name}");
+
+                // Highlight movement range
+                HighlightMovementRange(selectedCharacter);
             }
         }
     }
@@ -72,19 +76,16 @@ public class Testing : MonoBehaviour
 
         if (!IsWithinGridBounds(x, y)) return;
 
-        // Get grid position of selected character
         Vector3 selectedCharacterWorldPos = selectedCharacter.transform.position;
         pathfinding.GetGrid().GetXY(selectedCharacterWorldPos, out int startX, out int startY);
 
         float cellSize = pathfinding.GetGrid().GetCellSize();
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
 
-        // Get centered world positions
         Vector3 characterCenter = new Vector3(startX, startY) * cellSize + cellOffset;
         Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
 
         float distance = Vector3.Distance(characterCenter, targetCenter);
-
         float maxMoveDistance = selectedCharacter.GetMaxMoveDistance();
 
         if (distance > maxMoveDistance)
@@ -97,7 +98,6 @@ public class Testing : MonoBehaviour
 
         if (path != null)
         {
-            // Debug draw path
             for (int i = 0; i < path.Count - 1; i++)
             {
                 Vector3 startPos = new Vector3(path[i].x, path[i].y) * cellSize + cellOffset;
@@ -107,7 +107,55 @@ public class Testing : MonoBehaviour
 
             Debug.DrawRay(targetCenter, Vector3.up, Color.red, 1f);
             selectedCharacter.SetTargetPosition(targetCenter);
+
+            // Optionally, re-highlight movement after a move
+            Invoke(nameof(RefreshHighlight), 0.1f); // Give time for position update
         }
+    }
+
+    private void RefreshHighlight()
+    {
+        if (selectedCharacter != null)
+        {
+            HighlightMovementRange(selectedCharacter);
+        }
+    }
+
+    private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
+    {
+        if (character == null) return;
+
+        // Clear any previous highlights
+        pathfindingVisual.ClearHighlights();
+
+        // Get character's grid position
+        Vector3 characterWorldPos = character.transform.position;
+        pathfinding.GetGrid().GetXY(characterWorldPos, out int charX, out int charY);
+
+        float maxMoveDistance = character.GetMaxMoveDistance();
+        float cellSize = pathfinding.GetGrid().GetCellSize();
+
+        int maxRangeInCells = Mathf.FloorToInt(maxMoveDistance / cellSize);
+
+        List<PathNode> nodesInRange = new List<PathNode>();
+        Grid<PathNode> grid = pathfinding.GetGrid();
+
+        for (int x = 0; x < grid.GetWidth(); x++)
+        {
+            for (int y = 0; y < grid.GetHeight(); y++)
+            {
+                float distX = Mathf.Abs(x - charX);
+                float distY = Mathf.Abs(y - charY);
+                float distance = Mathf.Sqrt(distX * distX + distY * distY);
+
+                if (distance <= maxRangeInCells && grid.GetGridObject(x, y).isWalkable)
+                {
+                    nodesInRange.Add(grid.GetGridObject(x, y));
+                }
+            }
+        }
+
+        pathfindingVisual.HighlightNodes(nodesInRange, Color.blue);
     }
 
     private bool IsWithinGridBounds(int x, int y)
