@@ -31,7 +31,7 @@ public class Pathfinding {
         } else {
             List<Vector3> vectorPath = new List<Vector3>();
             foreach (PathNode pathNode in path) {
-                vectorPath.Add(new Vector3(pathNode.x, pathNode.y) * grid.GetCellSize() + Vector3.one * grid.GetCellSize() * .5f);
+                vectorPath.Add(new Vector3(pathNode.x, pathNode.y) * grid.GetCellSize() + Vector3.one * grid.GetCellSize() * 0.5f);
             }
             return vectorPath;
         }
@@ -61,16 +61,15 @@ public class Pathfinding {
         startNode.gCost = 0;
         startNode.hCost = CalculateDistanceCost(startNode, endNode);
         startNode.CalculateFCost();
-        
-        PathfindingDebugStepVisual.Instance.ClearSnapshots();
-        PathfindingDebugStepVisual.Instance.TakeSnapshot(grid, startNode, openList, closedList);
+
+        PathfindingDebugStepVisual.Instance?.ClearSnapshots();
+        PathfindingDebugStepVisual.Instance?.TakeSnapshot(grid, startNode, openList, closedList);
 
         while (openList.Count > 0) {
             PathNode currentNode = GetLowestFCostNode(openList);
             if (currentNode == endNode) {
-                // Reached final node
-                PathfindingDebugStepVisual.Instance.TakeSnapshot(grid, currentNode, openList, closedList);
-                PathfindingDebugStepVisual.Instance.TakeSnapshotFinalPath(grid, CalculatePath(endNode));
+                PathfindingDebugStepVisual.Instance?.TakeSnapshot(grid, currentNode, openList, closedList);
+                PathfindingDebugStepVisual.Instance?.TakeSnapshotFinalPath(grid, CalculatePath(endNode));
                 return CalculatePath(endNode);
             }
 
@@ -95,52 +94,42 @@ public class Pathfinding {
                         openList.Add(neighbourNode);
                     }
                 }
-                PathfindingDebugStepVisual.Instance.TakeSnapshot(grid, currentNode, openList, closedList);
+                PathfindingDebugStepVisual.Instance?.TakeSnapshot(grid, currentNode, openList, closedList);
             }
         }
 
-        // Out of nodes on the openList
+        // No path found
         return null;
     }
 
-    // Original method, includes diagonals
-    private List<PathNode> GetNeighbourList(PathNode currentNode) {
+    public List<PathNode> GetNeighbourList(PathNode currentNode) {
         List<PathNode> neighbourList = new List<PathNode>();
 
+        int gridWidth = grid.GetWidth();
+        int gridHeight = grid.GetHeight();
+
+        // Left
         if (currentNode.x - 1 >= 0) {
-            // Left
             neighbourList.Add(GetNode(currentNode.x - 1, currentNode.y));
             // Left Down
             if (currentNode.y - 1 >= 0) neighbourList.Add(GetNode(currentNode.x - 1, currentNode.y - 1));
             // Left Up
-            if (currentNode.y + 1 < grid.GetHeight()) neighbourList.Add(GetNode(currentNode.x - 1, currentNode.y + 1));
+            if (currentNode.y + 1 < gridHeight) neighbourList.Add(GetNode(currentNode.x - 1, currentNode.y + 1));
         }
-        if (currentNode.x + 1 < grid.GetWidth()) {
-            // Right
+        // Right
+        if (currentNode.x + 1 < gridWidth) {
             neighbourList.Add(GetNode(currentNode.x + 1, currentNode.y));
             // Right Down
             if (currentNode.y - 1 >= 0) neighbourList.Add(GetNode(currentNode.x + 1, currentNode.y - 1));
             // Right Up
-            if (currentNode.y + 1 < grid.GetHeight()) neighbourList.Add(GetNode(currentNode.x + 1, currentNode.y + 1));
+            if (currentNode.y + 1 < gridHeight) neighbourList.Add(GetNode(currentNode.x + 1, currentNode.y + 1));
         }
         // Down
         if (currentNode.y - 1 >= 0) neighbourList.Add(GetNode(currentNode.x, currentNode.y - 1));
         // Up
-        if (currentNode.y + 1 < grid.GetHeight()) neighbourList.Add(GetNode(currentNode.x, currentNode.y + 1));
+        if (currentNode.y + 1 < gridHeight) neighbourList.Add(GetNode(currentNode.x, currentNode.y + 1));
 
         return neighbourList;
-    }
-
-    // New method: neighbors **without diagonals**
-    public List<PathNode> GetNeighborsNonDiagonal(PathNode currentNode) {
-        List<PathNode> neighborList = new List<PathNode>();
-
-        if (currentNode.x - 1 >= 0) neighborList.Add(GetNode(currentNode.x - 1, currentNode.y));
-        if (currentNode.x + 1 < grid.GetWidth()) neighborList.Add(GetNode(currentNode.x + 1, currentNode.y));
-        if (currentNode.y - 1 >= 0) neighborList.Add(GetNode(currentNode.x, currentNode.y - 1));
-        if (currentNode.y + 1 < grid.GetHeight()) neighborList.Add(GetNode(currentNode.x, currentNode.y + 1));
-
-        return neighborList;
     }
 
     public PathNode GetNode(int x, int y) {
@@ -149,12 +138,13 @@ public class Pathfinding {
 
     private List<PathNode> CalculatePath(PathNode endNode) {
         List<PathNode> path = new List<PathNode>();
-        path.Add(endNode);
         PathNode currentNode = endNode;
-        while (currentNode.cameFromNode != null) {
-            path.Add(currentNode.cameFromNode);
+
+        while (currentNode != null) {
+            path.Add(currentNode);
             currentNode = currentNode.cameFromNode;
         }
+
         path.Reverse();
         return path;
     }
@@ -175,5 +165,4 @@ public class Pathfinding {
         }
         return lowestFCostNode;
     }
-
 }

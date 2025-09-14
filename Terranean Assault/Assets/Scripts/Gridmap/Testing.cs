@@ -17,24 +17,34 @@ public class Testing : MonoBehaviour
         pathfindingDebugStepVisual.Setup(pathfinding.GetGrid());
         pathfindingVisual.SetGrid(pathfinding.GetGrid());
 
+        // Subscribe to movement events for all characters
         foreach (var character in characters)
         {
             character.OnMovementStarted += HandleMovementStarted;
             character.OnMovementStopped += HandleMovementStopped;
         }
+
+        // Start with no selected character
+        selectedCharacter = null;
     }
 
     private void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            if (selectedCharacter == null)
+            Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
+
+            // First, try to select a character if clicked on one
+            TrySelectCharacter(mouseWorldPosition);
+
+            // If a character is selected and click is not on that character, try moving it
+            if (selectedCharacter != null)
             {
-                TrySelectCharacter();
-            }
-            else
-            {
-                TryMoveSelectedCharacter();
+                // If clicked on a character, selection already handled above, so only move if clicked elsewhere
+                if (!IsClickOnCharacter(mouseWorldPosition))
+                {
+                    TryMoveSelectedCharacter(mouseWorldPosition);
+                }
             }
         }
 
@@ -47,13 +57,12 @@ public class Testing : MonoBehaviour
             {
                 var node = pathfinding.GetNode(x, y);
                 node.SetIsWalkable(!node.isWalkable);
-pathfindingVisual.ClearHighlights();
-
-if (selectedCharacter != null)
-{
-    HighlightMovementRange(selectedCharacter);
-}
-
+                // Optionally refresh visuals here
+                pathfindingVisual.ClearHighlights();
+                if (selectedCharacter != null)
+                {
+                    HighlightMovementRange(selectedCharacter);
+                }
             }
         }
     }
@@ -61,67 +70,78 @@ if (selectedCharacter != null)
     private void HandleMovementStarted()
     {
         pathfindingVisual.ClearHighlights();
-        selectedCharacter = null; // Deselect after movement starts
     }
 
     private void HandleMovementStopped()
     {
-        // Nothing selected after movement, wait for user to pick next character
+        // After moving, clear selection and highlights
+        selectedCharacter = null;
+        pathfindingVisual.ClearHighlights();
     }
 
-    private void TrySelectCharacter()
+    private void TrySelectCharacter(Vector3 mouseWorldPosition)
     {
-        Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
         RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
 
         if (hit.collider != null)
         {
-            var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+            CharacterPathfindingMovementHandler clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
                 selectedCharacter = clickedCharacter;
                 HighlightMovementRange(selectedCharacter);
+                Debug.Log($"Selected character: {selectedCharacter.name}");
             }
         }
     }
 
-    private void TryMoveSelectedCharacter()
+    private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+        if (hit.collider != null)
+        {
+            var clickedChar = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+            return clickedChar != null && characters.Contains(clickedChar);
+        }
+        return false;
+    }
+
+    private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
     {
         if (selectedCharacter == null) return;
 
-        Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
         pathfinding.GetGrid().GetXY(mouseWorldPosition, out int x, out int y);
-
         if (!IsWithinGridBounds(x, y)) return;
 
-        pathfinding.GetGrid().GetXY(selectedCharacter.transform.position, out int startX, out int startY);
-
-        // Get reachable nodes using BFS (non-diagonal)
-        int maxRangeInCells = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize());
-        List<PathNode> reachableNodes = GetReachableNodes(startX, startY, maxRangeInCells);
-
-        // Check if clicked node is in reachable nodes
-        PathNode targetNode = pathfinding.GetNode(x, y);
-        if (!reachableNodes.Contains(targetNode))
-        {
-            Debug.Log("Target not reachable within movement range.");
-            return;
-        }
+        Vector3 charWorldPos = selectedCharacter.transform.position;
+        pathfinding.GetGrid().GetXY(charWorldPos, out int startX, out int startY);
 
         List<PathNode> path = pathfinding.FindPath(startX, startY, x, y);
-        if (path == null)
+        if (path == null) return;
+
+        // Calculate total path cost using pathfinding cost logic
+        int totalCost = 0;
+        for (int i = 0; i < path.Count - 1; i++)
         {
-            Debug.Log("No path found.");
+            PathNode from = path[i];
+            PathNode to = path[i + 1];
+            totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14; // straight or diagonal
+        }
+
+        int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
+
+        if (totalCost > maxMoveCost)
+        {
+            Debug.Log("Destination too far based on movement cost");
             return;
         }
 
         float cellSize = pathfinding.GetGrid().GetCellSize();
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
-        Vector3 targetWorldPos = new Vector3(x, y) * cellSize + cellOffset;
 
-        selectedCharacter.SetTargetPosition(targetWorldPos);
-        pathfindingVisual.ClearHighlights();
-        selectedCharacter = null; // Deselect after issuing move
+        Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
+
+        selectedCharacter.SetTargetPosition(targetCenter);
     }
 
     private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
@@ -130,27 +150,29 @@ if (selectedCharacter != null)
 
         pathfindingVisual.ClearHighlights();
 
-        pathfinding.GetGrid().GetXY(character.transform.position, out int charX, out int charY);
+        Vector3 charWorldPos = character.transform.position;
+        pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
 
-        int maxRangeInCells = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize());
+        int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
 
-        List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxRangeInCells);
+        List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
 
         pathfindingVisual.HighlightNodes(reachableNodes, Color.blue);
     }
 
-    private List<PathNode> GetReachableNodes(int startX, int startY, int maxRangeInCells)
+    private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
     {
         List<PathNode> reachableNodes = new List<PathNode>();
         Grid<PathNode> grid = pathfinding.GetGrid();
 
         bool[,] visited = new bool[grid.GetWidth(), grid.GetHeight()];
-        int[,] distance = new int[grid.GetWidth(), grid.GetHeight()];
+        int[,] costSoFar = new int[grid.GetWidth(), grid.GetHeight()];
+
         Queue<PathNode> queue = new Queue<PathNode>();
 
         PathNode startNode = grid.GetGridObject(startX, startY);
         visited[startX, startY] = true;
-        distance[startX, startY] = 0;
+        costSoFar[startX, startY] = 0;
 
         queue.Enqueue(startNode);
 
@@ -159,37 +181,23 @@ if (selectedCharacter != null)
             PathNode current = queue.Dequeue();
             reachableNodes.Add(current);
 
-            if (distance[current.x, current.y] >= maxRangeInCells)
-                continue;
-
-            // Use non-diagonal neighbors to avoid diagonal movement for range calculation
-            List<PathNode> neighbors = GetNonDiagonalNeighbors(current);
-
-            foreach (var neighbor in neighbors)
+            foreach (PathNode neighbor in pathfinding.GetNeighbourList(current))
             {
-                if (!visited[neighbor.x, neighbor.y] && neighbor.isWalkable)
+                if (!neighbor.isWalkable) continue;
+
+                int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14; // straight or diagonal
+                int newCost = costSoFar[current.x, current.y] + movementCost;
+
+                if (newCost <= maxMoveCost && (!visited[neighbor.x, neighbor.y] || newCost < costSoFar[neighbor.x, neighbor.y]))
                 {
                     visited[neighbor.x, neighbor.y] = true;
-                    distance[neighbor.x, neighbor.y] = distance[current.x, current.y] + 1;
+                    costSoFar[neighbor.x, neighbor.y] = newCost;
                     queue.Enqueue(neighbor);
                 }
             }
         }
 
         return reachableNodes;
-    }
-
-    private List<PathNode> GetNonDiagonalNeighbors(PathNode node)
-    {
-        List<PathNode> neighbors = new List<PathNode>();
-        Grid<PathNode> grid = pathfinding.GetGrid();
-
-        if (node.x - 1 >= 0) neighbors.Add(grid.GetGridObject(node.x - 1, node.y)); // Left
-        if (node.x + 1 < grid.GetWidth()) neighbors.Add(grid.GetGridObject(node.x + 1, node.y)); // Right
-        if (node.y - 1 >= 0) neighbors.Add(grid.GetGridObject(node.x, node.y - 1)); // Down
-        if (node.y + 1 < grid.GetHeight()) neighbors.Add(grid.GetGridObject(node.x, node.y + 1)); // Up
-
-        return neighbors;
     }
 
     private bool IsWithinGridBounds(int x, int y)
