@@ -165,8 +165,11 @@ public class Testing : MonoBehaviour
         List<PathNode> reachableNodes = new List<PathNode>();
         Grid<PathNode> grid = pathfinding.GetGrid();
 
-        bool[,] visited = new bool[grid.GetWidth(), grid.GetHeight()];
-        int[,] costSoFar = new int[grid.GetWidth(), grid.GetHeight()];
+        int width = grid.GetWidth();
+        int height = grid.GetHeight();
+
+        bool[,] visited = new bool[width, height];
+        int[,] costSoFar = new int[width, height];
 
         Queue<PathNode> queue = new Queue<PathNode>();
 
@@ -175,11 +178,11 @@ public class Testing : MonoBehaviour
         costSoFar[startX, startY] = 0;
 
         queue.Enqueue(startNode);
+        reachableNodes.Add(startNode);  // Add start node immediately
 
         while (queue.Count > 0)
         {
             PathNode current = queue.Dequeue();
-            reachableNodes.Add(current);
 
             foreach (PathNode neighbor in pathfinding.GetNeighbourList(current))
             {
@@ -188,11 +191,22 @@ public class Testing : MonoBehaviour
                 int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14; // straight or diagonal
                 int newCost = costSoFar[current.x, current.y] + movementCost;
 
-                if (newCost <= maxMoveCost && (!visited[neighbor.x, neighbor.y] || newCost < costSoFar[neighbor.x, neighbor.y]))
+                if (newCost <= maxMoveCost)
                 {
-                    visited[neighbor.x, neighbor.y] = true;
-                    costSoFar[neighbor.x, neighbor.y] = newCost;
-                    queue.Enqueue(neighbor);
+                    if (!visited[neighbor.x, neighbor.y])
+                    {
+                        visited[neighbor.x, neighbor.y] = true;
+                        costSoFar[neighbor.x, neighbor.y] = newCost;
+                        queue.Enqueue(neighbor);
+                        reachableNodes.Add(neighbor);  // Add once when first visited
+                    }
+                    else if (newCost < costSoFar[neighbor.x, neighbor.y])
+                    {
+                        // Found a cheaper path, update cost and re-enqueue
+                        costSoFar[neighbor.x, neighbor.y] = newCost;
+                        queue.Enqueue(neighbor);
+                        // Do NOT add to reachableNodes again
+                    }
                 }
             }
         }
