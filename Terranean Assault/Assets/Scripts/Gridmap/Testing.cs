@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using CodeMonkey.Utils;
 
 public class Testing : MonoBehaviour
@@ -7,25 +9,56 @@ public class Testing : MonoBehaviour
     [SerializeField] private PathfindingDebugStepVisual pathfindingDebugStepVisual;
     [SerializeField] private PathfindingVisual pathfindingVisual;
     [SerializeField] private List<CharacterPathfindingMovementHandler> characters;
+    [SerializeField] private Tilemap wallTilemap; // Assign this in Inspector
 
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
 
     private void Start()
     {
+        StartCoroutine(InitAfterTilemap());
+    }
+
+    private IEnumerator InitAfterTilemap()
+    {
+        // Wait a frame to allow Unity to fully initialize tilemaps
+        yield return null;
+
         pathfinding = new Pathfinding(44, 30);
+
         pathfindingDebugStepVisual.Setup(pathfinding.GetGrid());
         pathfindingVisual.SetGrid(pathfinding.GetGrid());
 
-        // Subscribe to movement events for all characters
         foreach (var character in characters)
         {
             character.OnMovementStarted += HandleMovementStarted;
             character.OnMovementStopped += HandleMovementStopped;
         }
 
-        // Start with no selected character
         selectedCharacter = null;
+
+        MarkWallsUnwalkable(); // Update pathfinding walkability based on tilemap
+    }
+
+    private void MarkWallsUnwalkable()
+    {
+        Grid<PathNode> grid = pathfinding.GetGrid();
+        BoundsInt bounds = wallTilemap.cellBounds;
+
+        foreach (Vector3Int cellPos in bounds.allPositionsWithin)
+        {
+            if (!wallTilemap.HasTile(cellPos)) continue;
+
+            Vector3 worldPos = wallTilemap.CellToWorld(cellPos) + wallTilemap.cellSize / 2;
+            grid.GetXY(worldPos, out int x, out int y);
+
+            if (IsWithinGridBounds(x, y))
+            {
+                grid.GetGridObject(x, y).SetIsWalkable(false);
+            }
+        }
+
+        Debug.Log("Marked wall tiles as unwalkable.");
     }
 
     private void Update()
@@ -33,18 +66,11 @@ public class Testing : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
-
-            // First, try to select a character if clicked on one
             TrySelectCharacter(mouseWorldPosition);
 
-            // If a character is selected and click is not on that character, try moving it
-            if (selectedCharacter != null)
+            if (selectedCharacter != null && !IsClickOnCharacter(mouseWorldPosition))
             {
-                // If clicked on a character, selection already handled above, so only move if clicked elsewhere
-                if (!IsClickOnCharacter(mouseWorldPosition))
-                {
-                    TryMoveSelectedCharacter(mouseWorldPosition);
-                }
+                TryMoveSelectedCharacter(mouseWorldPosition);
             }
         }
 
@@ -57,7 +83,6 @@ public class Testing : MonoBehaviour
             {
                 var node = pathfinding.GetNode(x, y);
                 node.SetIsWalkable(!node.isWalkable);
-                // Optionally refresh visuals here
                 pathfindingVisual.ClearHighlights();
                 if (selectedCharacter != null)
                 {
@@ -74,7 +99,6 @@ public class Testing : MonoBehaviour
 
     private void HandleMovementStopped()
     {
-        // After moving, clear selection and highlights
         selectedCharacter = null;
         pathfindingVisual.ClearHighlights();
     }
@@ -85,7 +109,7 @@ public class Testing : MonoBehaviour
 
         if (hit.collider != null)
         {
-            CharacterPathfindingMovementHandler clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+            var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
                 selectedCharacter = clickedCharacter;
@@ -98,12 +122,8 @@ public class Testing : MonoBehaviour
     private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
     {
         RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
-        if (hit.collider != null)
-        {
-            var clickedChar = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
-            return clickedChar != null && characters.Contains(clickedChar);
-        }
-        return false;
+        var clickedChar = hit.collider?.GetComponent<CharacterPathfindingMovementHandler>();
+        return clickedChar != null && characters.Contains(clickedChar);
     }
 
     private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
@@ -119,13 +139,12 @@ public class Testing : MonoBehaviour
         List<PathNode> path = pathfinding.FindPath(startX, startY, x, y);
         if (path == null) return;
 
-        // Calculate total path cost using pathfinding cost logic
         int totalCost = 0;
         for (int i = 0; i < path.Count - 1; i++)
         {
             PathNode from = path[i];
             PathNode to = path[i + 1];
-            totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14; // straight or diagonal
+            totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14;
         }
 
         int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
@@ -138,7 +157,6 @@ public class Testing : MonoBehaviour
 
         float cellSize = pathfinding.GetGrid().GetCellSize();
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
-
         Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
 
         selectedCharacter.SetTargetPosition(targetCenter);
@@ -154,7 +172,6 @@ public class Testing : MonoBehaviour
         pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
 
         int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
-
         List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
 
         pathfindingVisual.HighlightNodes(reachableNodes, Color.blue);
@@ -162,7 +179,7 @@ public class Testing : MonoBehaviour
 
     private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
     {
-        List<PathNode> reachableNodes = new List<PathNode>();
+        List<PathNode> reachableNodes = new();
         Grid<PathNode> grid = pathfinding.GetGrid();
 
         int width = grid.GetWidth();
@@ -171,14 +188,14 @@ public class Testing : MonoBehaviour
         bool[,] visited = new bool[width, height];
         int[,] costSoFar = new int[width, height];
 
-        Queue<PathNode> queue = new Queue<PathNode>();
+        Queue<PathNode> queue = new();
 
         PathNode startNode = grid.GetGridObject(startX, startY);
         visited[startX, startY] = true;
         costSoFar[startX, startY] = 0;
 
         queue.Enqueue(startNode);
-        reachableNodes.Add(startNode);  // Add start node immediately
+        reachableNodes.Add(startNode);
 
         while (queue.Count > 0)
         {
@@ -188,7 +205,7 @@ public class Testing : MonoBehaviour
             {
                 if (!neighbor.isWalkable) continue;
 
-                int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14; // straight or diagonal
+                int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14;
                 int newCost = costSoFar[current.x, current.y] + movementCost;
 
                 if (newCost <= maxMoveCost)
@@ -198,14 +215,12 @@ public class Testing : MonoBehaviour
                         visited[neighbor.x, neighbor.y] = true;
                         costSoFar[neighbor.x, neighbor.y] = newCost;
                         queue.Enqueue(neighbor);
-                        reachableNodes.Add(neighbor);  // Add once when first visited
+                        reachableNodes.Add(neighbor);
                     }
                     else if (newCost < costSoFar[neighbor.x, neighbor.y])
                     {
-                        // Found a cheaper path, update cost and re-enqueue
                         costSoFar[neighbor.x, neighbor.y] = newCost;
                         queue.Enqueue(neighbor);
-                        // Do NOT add to reachableNodes again
                     }
                 }
             }
