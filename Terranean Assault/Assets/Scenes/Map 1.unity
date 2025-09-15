@@ -14991,6 +14991,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3910777302283021616, guid: 04c860c17e3d17f4b854158aac05441a,
         type: 3}
+      propertyPath: wallTilemap
+      value: 
+      objectReference: {fileID: 873511845}
+    - target: {fileID: 3910777302283021616, guid: 04c860c17e3d17f4b854158aac05441a,
+        type: 3}
       propertyPath: pathfindingVisual
       value: 
       objectReference: {fileID: 660196389}
