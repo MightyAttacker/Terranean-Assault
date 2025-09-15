@@ -10,7 +10,7 @@ public class MainMenu : MonoBehaviour
 
     public void Options()
     {
-        Debug.Log("Options button clicked (currently does nothing).");
+        SceneManager.LoadSceneAsync(3);
     }
 
     public void QuitGame()
