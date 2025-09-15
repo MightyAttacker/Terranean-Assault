@@ -3,7 +3,7 @@ using UnityEngine.Tilemaps;
 
 public class TilemapWalkabilityInitializer : MonoBehaviour
 {
-    public Tilemap wallTilemap; // Assign the WallTilemap in the Inspector
+    public Tilemap wallTilemap;
 
     private void Start()
     {
@@ -22,12 +22,12 @@ public class TilemapWalkabilityInitializer : MonoBehaviour
                 Vector3 worldPos = grid.GetWorldPosition(x, y) + Vector3.one * grid.GetCellSize() * 0.5f;
                 Vector3Int tilePos = wallTilemap.WorldToCell(worldPos);
 
-                bool isWall = wallTilemap.HasTile(tilePos); // ⬅️ true if there's a wall tile
+                bool isWall = wallTilemap.HasTile(tilePos); // true if there's a wall tile
 
                 PathNode node = grid.GetGridObject(x, y);
                 if (node != null)
                 {
-                    node.SetIsWalkable(!isWall); // ⬅️ Not walkable if wall tile exists
+                    node.SetIsWalkable(!isWall); // Not walkable if wall tile exists
                 }
             }
         }
