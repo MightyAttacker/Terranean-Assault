@@ -7,4 +7,10 @@ public class SceneManagerScript : MonoBehaviour
     {
         SceneManager.LoadScene(sceneName);
     }
+
+        public void map1pick()
+    {
+        // Start a new game (same as PlayGame in MainMenu)
+        SceneManager.LoadSceneAsync(2);
+    }
 }
