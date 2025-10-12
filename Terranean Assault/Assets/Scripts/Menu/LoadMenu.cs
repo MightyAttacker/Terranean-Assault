@@ -6,7 +6,7 @@ public class LoadMenu : MonoBehaviour
     public void NewGame()
     {
         // Start a new game (same as PlayGame in MainMenu)
-        SceneManager.LoadSceneAsync(2);
+        SceneManager.LoadSceneAsync(3);
     }
 
     public void LoadGame()
@@ -20,7 +20,7 @@ public class LoadMenu : MonoBehaviour
     public void Back()
     {
         // Start a new game (same as PlayGame in MainMenu)
-        SceneManager.LoadSceneAsync(0);
+        SceneManager.LoadSceneAsync(1);
     }
 
     public void QuitGame()
