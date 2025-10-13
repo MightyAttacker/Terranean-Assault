@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 722580e4731a38f4aa494fc08ddb53e9
+guid: 2583d67516db3464893a755c25cc58e0
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2341173913865107019
-    second: left arrow1_0
+      213: 6455666888207568845
+    second: Charchter Selection Menu_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: left arrow1_0
+      name: Charchter Selection Menu_0
       rect:
         serializedVersion: 2
-        x: 74
-        y: 35
-        width: 364
-        height: 442
+        x: 0
+        y: 999
+        width: 10000
+        height: 5802
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b46375545458d7020800000000000000
-      internalID: 2341173913865107019
+      spriteID: dcf0ddbc4d2279950800000000000000
+      internalID: 6455666888207568845
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      left arrow1_0: 2341173913865107019
+      Charchter Selection Menu_0: 6455666888207568845
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
