@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 38c0444a60873a440b460fff99d961a7
+guid: 2c615a8b1ce2ea34da1f1e6860260a60
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5971769673805460783
-    second: ScoutLI_0
+      213: -1617038891848454194
+    second: AssaultSquadMC_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ScoutLI_0
+      name: AssaultSquadMC_0
       rect:
         serializedVersion: 2
         x: 5
-        y: 8
-        width: 22
-        height: 24
+        y: 6
+        width: 23
+        height: 22
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1da00681f13002da0800000000000000
-      internalID: -5971769673805460783
+      spriteID: ecfa16ff1bf1f89e0800000000000000
+      internalID: -1617038891848454194
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ScoutLI_0: -5971769673805460783
+      AssaultSquadMC_0: -1617038891848454194
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
