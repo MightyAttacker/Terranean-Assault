@@ -42,6 +42,7 @@ public class PathfindingVisual : MonoBehaviour
 
     private void UpdateVisual()
     {
+        
         MeshUtils.CreateEmptyMeshArrays(grid.GetWidth() * grid.GetHeight(), out Vector3[] vertices, out Vector2[] uv, out int[] triangles);
 
         for (int x = 0; x < grid.GetWidth(); x++)
@@ -55,7 +56,7 @@ public class PathfindingVisual : MonoBehaviour
 
                 if (pathNode.isWalkable)
                 {
-                    quadSize = Vector3.zero;
+                    continue;
                 }
 
                 MeshUtils.AddToMeshArrays(vertices, uv, triangles, index, grid.GetWorldPosition(x, y) + quadSize * .5f, 0f, quadSize, Vector2.zero, Vector2.zero);

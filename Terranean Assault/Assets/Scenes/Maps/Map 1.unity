@@ -700,7 +700,7 @@ PrefabInstance:
     - target: {fileID: 4724150144820703482, guid: b5780932568c7604e823829364b91728,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 40.5
+      value: 42.5
       objectReference: {fileID: 0}
     - target: {fileID: 4724150144820703482, guid: b5780932568c7604e823829364b91728,
         type: 3}
@@ -906,6 +906,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5772456019295091940, guid: 5c237c681104d614c8a167a35da68a7c,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6337310847368697592, guid: 5c237c681104d614c8a167a35da68a7c,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -960,6 +965,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: PathfindingVisual
+      objectReference: {fileID: 0}
+    - target: {fileID: 8085663756015359578, guid: 5c237c681104d614c8a167a35da68a7c,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1123,12 +1133,12 @@ PrefabInstance:
     - target: {fileID: 2182076417435907785, guid: aaac47209b4990f4ba3f32094c8f4edd,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 36.5
+      value: 41.6
       objectReference: {fileID: 0}
     - target: {fileID: 2182076417435907785, guid: aaac47209b4990f4ba3f32094c8f4edd,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 14.5
+      value: 24.43
       objectReference: {fileID: 0}
     - target: {fileID: 2182076417435907785, guid: aaac47209b4990f4ba3f32094c8f4edd,
         type: 3}
@@ -1174,11 +1184,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: AssaultSargentMC_0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7236904555300100315, guid: aaac47209b4990f4ba3f32094c8f4edd,
-        type: 3}
-      propertyPath: m_SortingOrder
-      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1503,6 +1508,11 @@ PrefabInstance:
     - target: {fileID: 2473009256053282561, guid: 8ca56722a8f362d4a858247a362734a3,
         type: 3}
       propertyPath: m_SortingOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2887776304779835323, guid: 8ca56722a8f362d4a858247a362734a3,
+        type: 3}
+      propertyPath: m_Layer
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4280443277536930086, guid: 8ca56722a8f362d4a858247a362734a3,
@@ -5279,6 +5289,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Tiles.Array.data[180].second.m_TileObjectToInstantiateIndex
       value: 65535
+      objectReference: {fileID: 0}
+    - target: {fileID: 6471399618809194705, guid: 8ca56722a8f362d4a858247a362734a3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7069599771540597918, guid: 8ca56722a8f362d4a858247a362734a3,
         type: 3}
@@ -18808,6 +18823,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Grid
+      objectReference: {fileID: 0}
+    - target: {fileID: 8481660712273403409, guid: 8ca56722a8f362d4a858247a362734a3,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9074545250649758730, guid: 8ca56722a8f362d4a858247a362734a3,
         type: 3}
