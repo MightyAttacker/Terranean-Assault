@@ -14,9 +14,28 @@ public class Testing : MonoBehaviour
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
 
+    //Legions Imperius Units
+    public GameObject Engineer;
+    public GameObject HeavyWeaponsTeam;
+    public GameObject Medic;
+    public GameObject Scout;
+    public GameObject Sniper;
+    public GameObject Soldier;
+    public GameObject Tank;
+
+    //Mechanised Commonwealth Units
+    public GameObject AssaultLeader;
+    public GameObject AssaultSargent;
+    public GameObject AssaultSquad;
+    public GameObject AssaultTransport;
+
+
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
+        Vector3 spawnPosition = new Vector3(0, 5, 0);
+        Quaternion spawnRotation = Quaternion.identity; 
+        GameObject newPrefabInstance = Instantiate(Soldier, spawnPosition, spawnRotation);
     }
 
     private IEnumerator InitAfterTilemap()
