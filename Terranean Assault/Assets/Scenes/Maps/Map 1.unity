@@ -259,7 +259,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -495,8 +495,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 3306339617899196767, guid: da7f1b6a230b342409a864d8e3a56ee9,
-    type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -718,7 +717,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1060,6 +1059,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 401547c2d1fe5704385776894fb57ace, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hotbar
+  Images:
+  - {fileID: 1925907226}
+  - {fileID: 392722330}
+  - {fileID: 1094311319}
+  - {fileID: 1235476788}
+  - {fileID: 159318912}
+  - {fileID: 14972104}
+  - {fileID: 970055393}
+  - {fileID: 1523907781}
+  - {fileID: 1862073811}
+  itemPrefabs:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   slots:
   - {fileID: 388418039}
   - {fileID: 1225245989}
@@ -1070,7 +1089,24 @@ MonoBehaviour:
   - {fileID: 1069505554}
   - {fileID: 1331432612}
   - {fileID: 134013455}
-  itemSprites: []
+  Blank: {fileID: 0}
+  Engineer: {fileID: 1660666949322602796, guid: dd786d91829838646920c2719bca7674,
+    type: 3}
+  HeavyWeapons: {fileID: 578177851848316868, guid: dbaca4215ee5b824e9f583859f3f700f,
+    type: 3}
+  Medic: {fileID: 7194117310325499366, guid: 445784c1e064b1d49b797f91e4943554, type: 3}
+  Scout: {fileID: 1594536101128610490, guid: cddebf7dcde45ff49ad8fbe50ebecc04, type: 3}
+  Sniper: {fileID: 3706223228574245351, guid: 180022e1dc16ba84b9bfed12d32083b9, type: 3}
+  Soldier: {fileID: 6449158475792463234, guid: 77e664745a25b4e46bc4875d5e6155dd, type: 3}
+  Tank: {fileID: 8590168648900800359, guid: 95de4ad8920983948ba7debffd39b0be, type: 3}
+  AssaultLeader: {fileID: 3771261067173815011, guid: b5780932568c7604e823829364b91728,
+    type: 3}
+  AssaultSargent: {fileID: 5827185757938238746, guid: aaac47209b4990f4ba3f32094c8f4edd,
+    type: 3}
+  AssaultSquad: {fileID: 8105415175480189622, guid: f1bdd4d97d55d734eb7947eda8b86a35,
+    type: 3}
+  AssaultTransport: {fileID: 5786859918405285311, guid: c17e46eab2ebc4344ba7fddec98337dc,
+    type: 3}
 --- !u!114 &639653132 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2659326941090174436, guid: 445784c1e064b1d49b797f91e4943554,
@@ -1170,8 +1206,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 8798821899982035188, guid: c1853b975042b964d814639745004245,
-    type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1782,7 +1817,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1999,7 +2034,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2240,7 +2275,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2617,7 +2652,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2692,7 +2727,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
