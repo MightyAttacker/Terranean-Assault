@@ -41,7 +41,6 @@ public class Hotbar : MonoBehaviour
     {
         selectedSlot = index;
         HighlightSlot(index);
-        Debug.Log("Selected slot: " + (index + 1));
     }
 
     void HighlightSlot(int index)
