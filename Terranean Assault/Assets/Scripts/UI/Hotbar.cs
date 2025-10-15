@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems; // Needed for click detection
 
 public class Hotbar : MonoBehaviour
 {
@@ -10,17 +11,23 @@ public class Hotbar : MonoBehaviour
 
     void Start()
     {
-        // Example: fill slots with sprites from your assets
-        for (int i = 0; i < slots.Length && i < itemSprites.Length; i++)
+        // Add click listeners to each slot
+        for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].sprite = itemSprites[i];
+            int index = i; // Capture the current index for the listener
+            Button button = slots[i].GetComponent<Button>();
+            if (button == null)
+            {
+                // Add a Button component if one isn't already present
+                button = slots[i].gameObject.AddComponent<Button>();
+            }
+            button.onClick.AddListener(() => SelectSlot(index));
         }
-
-        HighlightSlot(selectedSlot);
     }
 
     void Update()
     {
+        // Allow selecting slots with number keys (1–9)
         for (int i = 0; i < slots.Length; i++)
         {
             if (Input.GetKeyDown(KeyCode.Alpha1 + i))
@@ -34,14 +41,13 @@ public class Hotbar : MonoBehaviour
     {
         selectedSlot = index;
         HighlightSlot(index);
-        Debug.Log("Selected slot: " + (index + 1));
     }
 
     void HighlightSlot(int index)
     {
         for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].color = (i == index) ? Color.yellow : Color.white;
+            slots[i].color = (i == index) ? Color.cyan : Color.white;
         }
     }
 }

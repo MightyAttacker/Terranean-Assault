@@ -33,7 +33,7 @@ public class Testing : MonoBehaviour
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
-        Vector3 spawnPosition = new Vector3(0, 5, 0);
+        Vector3 spawnPosition = new Vector3(2, 5, 0);
         Quaternion spawnRotation = Quaternion.identity; 
         GameObject newPrefabInstance = Instantiate(Soldier, spawnPosition, spawnRotation);
     }
@@ -91,23 +91,6 @@ public class Testing : MonoBehaviour
             if (selectedCharacter != null && !IsClickOnCharacter(mouseWorldPosition))
             {
                 TryMoveSelectedCharacter(mouseWorldPosition);
-            }
-        }
-
-        if (Input.GetMouseButtonDown(1))
-        {
-            Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
-            pathfinding.GetGrid().GetXY(mouseWorldPosition, out int x, out int y);
-
-            if (IsWithinGridBounds(x, y))
-            {
-                var node = pathfinding.GetNode(x, y);
-                node.SetIsWalkable(!node.isWalkable);
-                pathfindingVisual.ClearHighlights();
-                if (selectedCharacter != null)
-                {
-                    HighlightMovementRange(selectedCharacter);
-                }
             }
         }
     }
