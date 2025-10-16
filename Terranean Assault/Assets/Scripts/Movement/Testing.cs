@@ -15,7 +15,7 @@ public class Testing : MonoBehaviour
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
     int[] attackerMovementPhases = { 2, 6, 10, 14, 18 };
     int[] defenderMovementPhases = { 4, 8, 12, 16, 20 };
-    
+
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
@@ -94,9 +94,19 @@ public class Testing : MonoBehaviour
             var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
-                // Enforce tag check
-                if ((System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
-        (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag)))
+                // FIRST: Check if unit has already moved this phase
+                if (clickedCharacter.LastMovedPhase == hotbar.phase)
+                {
+                    Debug.Log($"{clickedCharacter.name} has already moved in phase {hotbar.phase}.");
+                    return; // Don't allow selection or highlight
+                }
+
+                // THEN: Check if unit matches current phase tag
+                bool canSelect =
+                    (System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
+                    (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag));
+
+                if (canSelect)
                 {
                     selectedCharacter = clickedCharacter;
                     HighlightMovementRange(selectedCharacter);
@@ -109,6 +119,8 @@ public class Testing : MonoBehaviour
             }
         }
     }
+
+
 
 
     private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
@@ -153,8 +165,10 @@ public class Testing : MonoBehaviour
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
         Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
 
-        selectedCharacter.SetTargetPosition(targetCenter);
-        selectedCharacter = null;
+        if (selectedCharacter.TryMove(targetCenter, hotbar.phase))
+        {
+            selectedCharacter = null;
+        }
     }
 
     private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
