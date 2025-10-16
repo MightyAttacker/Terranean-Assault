@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
+using TMPro;
+using System.Collections;
 
 public class Hotbar : MonoBehaviour
 {
@@ -21,6 +23,9 @@ public class Hotbar : MonoBehaviour
     [Header("Team Settings")]
     [Tooltip("Tag that marks units you are allowed to pick up (e.g., 'LegionsImperius')")]
     public string friendlyTag = "LegionsImperius";
+
+    [Header("Error Display")]
+    public ErrorDisplay errorDisplay;
 
     [Header("Tracking Spawned Units")]
     [Tooltip("All spawned units for movement tracking.")]
@@ -73,7 +78,7 @@ public class Hotbar : MonoBehaviour
 
         // Add toggle mode button listener
         if (toggleModeButton != null)
-            toggleModeButton.onClick.AddListener(TogglePlacementMode);
+            toggleModeButton.onClick.AddListener(HideHotbar);
 
         HighlightSlot(-1);
     }
@@ -81,8 +86,8 @@ public class Hotbar : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.H)) // press H to toggle hotbar
-        TogglePlacementMode();
-        
+            HideHotbar();
+
         if (!placementMode) return; // disable placement updates when in movement mode
 
         Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
@@ -148,6 +153,16 @@ public class Hotbar : MonoBehaviour
         }
     }
 
+    bool IsHotbarEmpty()
+    {
+        foreach (var prefab in itemPrefabs)
+        {
+            if (prefab != null)
+                return false;
+        }
+        return true;
+    }
+
     void SelectSlot(int index)
     {
         if (selectedSlot == index)
@@ -190,10 +205,10 @@ public class Hotbar : MonoBehaviour
         if (WallTilemap != null)
         {
             Vector3Int cellPos = WallTilemap.WorldToCell(position);
-            TileBase tile = WallTilemap.GetTile(cellPos);
-            if (tile != null)
+            bool overWall = WallTilemap.GetTile(cellPos) != null;
+            if (overWall)
             {
-                Debug.Log("Cannot place on wall tile!");
+                errorDisplay.ShowError("Cannot place on wall tile!");
                 return;
             }
         }
@@ -244,7 +259,7 @@ public class Hotbar : MonoBehaviour
             }
         }
 
-        Debug.Log("Hotbar full – cannot pick up more units!");
+        errorDisplay.ShowError("Hotbar full – cannot pick up more units!");
     }
 
     void SetGhostVisual(GameObject obj, bool isGhost)
@@ -283,23 +298,30 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-public void TogglePlacementMode()
-{
-    placementMode = false; // switch to movement mode
-    Debug.Log("Hotbar hidden, placementMode: " + placementMode);
-
-    // Hide the panel (hotbar + all its child slots)
-    if (hotbarPanel != null)
-        hotbarPanel.SetActive(false);
-
-    // Destroy ghost & deselect
-    if (currentGhost != null)
+    public void HideHotbar()
     {
-        Destroy(currentGhost);
-        selectedSlot = -1;
-        HighlightSlot(-1);
+        if (IsHotbarEmpty())
+        {
+            placementMode = false; // switch to movement mode
+            Debug.Log("Hotbar hidden, placementMode: " + placementMode);
+
+            // Hide the panel (hotbar + all its child slots)
+            if (hotbarPanel != null)
+                hotbarPanel.SetActive(false);
+
+            // Destroy ghost & deselect
+            if (currentGhost != null)
+            {
+                Destroy(currentGhost);
+                selectedSlot = -1;
+                HighlightSlot(-1);
+            }
+        }
+        else
+        {
+            errorDisplay.ShowError("Please place all units first");
+        }
     }
-}
 
     GameObject FindPrefabByName(string name)
     {
