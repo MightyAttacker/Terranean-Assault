@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.Tilemaps;
 using CodeMonkey.Utils;
 
@@ -8,56 +7,58 @@ public class Testing : MonoBehaviour
 {
     [SerializeField] private PathfindingDebugStepVisual pathfindingDebugStepVisual;
     [SerializeField] private PathfindingVisual pathfindingVisual;
-    [SerializeField] private List<CharacterPathfindingMovementHandler> characters;
-    [SerializeField] private Tilemap wallTilemap; // Assign this in Inspector
+    [SerializeField] private Hotbar hotbar; // Reference Hotbar
+    [SerializeField] private Tilemap wallTilemap;
 
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
-
-    //Legions Imperius Units
-    public GameObject Engineer;
-    public GameObject HeavyWeaponsTeam;
-    public GameObject Medic;
-    public GameObject Scout;
-    public GameObject Sniper;
-    public GameObject Soldier;
-    public GameObject Tank;
-
-    //Mechanised Commonwealth Units
-    public GameObject AssaultLeader;
-    public GameObject AssaultSargent;
-    public GameObject AssaultSquad;
-    public GameObject AssaultTransport;
-
+    private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
 
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
-        Vector3 spawnPosition = new Vector3(2, 5, 0);
-        Quaternion spawnRotation = Quaternion.identity; 
-        GameObject newPrefabInstance = Instantiate(Soldier, spawnPosition, spawnRotation);
     }
 
-    private IEnumerator InitAfterTilemap()
+    private System.Collections.IEnumerator InitAfterTilemap()
     {
-        // Wait a frame to allow Unity to fully initialize tilemaps
-        yield return null;
+        yield return null; // Wait for tilemap initialization
 
         pathfinding = new Pathfinding(44, 30);
 
-        Debug.Log($"pathfinding: {(pathfinding != null)} | debugVisual: {(pathfindingDebugStepVisual != null)} | pathfindingVisual: {(pathfindingVisual != null)} | grid: {(pathfinding?.GetGrid() != null)}");
         pathfindingDebugStepVisual.Setup(pathfinding.GetGrid());
         pathfindingVisual.SetGrid(pathfinding.GetGrid());
 
-        foreach (var character in characters)
-        {
-            character.OnMovementStarted += HandleMovementStarted;
-            character.OnMovementStopped += HandleMovementStopped;
-        }
+        UpdateCharacterList();
 
         selectedCharacter = null;
 
-        MarkWallsUnwalkable(); // Update pathfinding walkability based on tilemap
+        MarkWallsUnwalkable();
+    }
+
+    private void Update()
+    {
+        // Refresh character list dynamically
+        UpdateCharacterList();
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector3 mouseWorld = UtilsClass.GetMouseWorldPosition();
+            TrySelectCharacter(mouseWorld);
+
+            if (selectedCharacter != null && !IsClickOnCharacter(mouseWorld))
+                TryMoveSelectedCharacter(mouseWorld);
+        }
+    }
+
+    private void UpdateCharacterList()
+    {
+        characters.Clear();
+        foreach (var unit in hotbar.spawnedUnits)
+        {
+            var handler = unit.GetComponent<CharacterPathfindingMovementHandler>();
+            if (handler != null)
+                characters.Add(handler);
+        }
     }
 
     private void MarkWallsUnwalkable()
@@ -72,38 +73,11 @@ public class Testing : MonoBehaviour
             Vector3 worldPos = wallTilemap.CellToWorld(cellPos) + wallTilemap.cellSize / 2;
             grid.GetXY(worldPos, out int x, out int y);
 
-            if (IsWithinGridBounds(x, y))
-            {
+            if (x >= 0 && y >= 0 && x < grid.GetWidth() && y < grid.GetHeight())
                 grid.GetGridObject(x, y).SetIsWalkable(false);
-            }
         }
 
         Debug.Log("Marked wall tiles as unwalkable.");
-    }
-
-    private void Update()
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector3 mouseWorldPosition = UtilsClass.GetMouseWorldPosition();
-            TrySelectCharacter(mouseWorldPosition);
-
-            if (selectedCharacter != null && !IsClickOnCharacter(mouseWorldPosition))
-            {
-                TryMoveSelectedCharacter(mouseWorldPosition);
-            }
-        }
-    }
-
-    private void HandleMovementStarted()
-    {
-        pathfindingVisual.ClearHighlights();
-    }
-
-    private void HandleMovementStopped()
-    {
-        selectedCharacter = null;
-        pathfindingVisual.ClearHighlights();
     }
 
     private void TrySelectCharacter(Vector3 mouseWorldPosition)
