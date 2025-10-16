@@ -82,79 +82,74 @@ public class Hotbar : MonoBehaviour
 
     void Update()
     {
-        //if (phase == 2 || phase == 3)
+        Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorld.z = 0f;
+
+        // Number keys select hotbar
+        for (int i = 0; i < Images.Length; i++)
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+                SelectSlot(i);
+
+        // === If ghost active (placing) ===
+        if (currentGhost != null)
         {
-            if (!placementMode) return; // disable placement updates when in movement mode
+            // Snap to grid center
+            mouseWorld.x = Mathf.Floor(mouseWorld.x) + 0.5f;
+            mouseWorld.y = Mathf.Floor(mouseWorld.y) + 0.5f;
+            currentGhost.transform.position = mouseWorld;
 
-            Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorld.z = 0f;
-
-            // Number keys select hotbar
-            for (int i = 0; i < Images.Length; i++)
-                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
-                    SelectSlot(i);
-
-            // === If ghost active (placing) ===
-            if (currentGhost != null)
+            // Check for wall tile
+            bool overWall = false;
+            if (WallTilemap != null)
             {
-                // Snap to grid center
-                mouseWorld.x = Mathf.Floor(mouseWorld.x) + 0.5f;
-                mouseWorld.y = Mathf.Floor(mouseWorld.y) + 0.5f;
-                currentGhost.transform.position = mouseWorld;
-
-                // Check for wall tile
-                bool overWall = false;
-                if (WallTilemap != null)
-                {
-                    Vector3Int cellPos = WallTilemap.WorldToCell(mouseWorld);
-                    overWall = WallTilemap.GetTile(cellPos) != null;
-                }
-
-                // Ghost color feedback
-                SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
-                foreach (var r in renderers)
-                {
-                    Color c = overWall ? Color.red : Color.white;
-                    c.a = 0.5f;
-                    r.color = c;
-                }
-
-                // Left click = place
-                if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !overWall)
-                    PlaceItem(mouseWorld);
-
-                // Right click = cancel
-                if (Input.GetMouseButtonDown(1))
-                    DeselectSlot();
+                Vector3Int cellPos = WallTilemap.WorldToCell(mouseWorld);
+                overWall = WallTilemap.GetTile(cellPos) != null;
             }
-            // === Right click to pick up units while placing ===
-            else
-            {
-                if (Input.GetMouseButtonDown(1) && !EventSystem.current.IsPointerOverGameObject())
-                {
-                    Vector2 mousePos2D = mainCam.ScreenToWorldPoint(Input.mousePosition);
-                    RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
 
-                    if (hit.collider != null)
+            // Ghost color feedback
+            SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
+            foreach (var r in renderers)
+            {
+                Color c = overWall ? Color.red : Color.white;
+                c.a = 0.5f;
+                r.color = c;
+            }
+
+            // Left click = place
+            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !overWall)
+                PlaceItem(mouseWorld);
+
+            // Right click = cancel
+            if (Input.GetMouseButtonDown(1))
+                DeselectSlot();
+        }
+        // === Right click to pick up units while placing ===
+        else
+        {
+            if (Input.GetMouseButtonDown(1) && !EventSystem.current.IsPointerOverGameObject())
+            {
+                Vector2 mousePos2D = mainCam.ScreenToWorldPoint(Input.mousePosition);
+                RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
+
+                if (hit.collider != null)
+                {
+                    GameObject clickedObj = hit.collider.gameObject;
+                    if (phase == 0 || phase == 2)
                     {
-                        GameObject clickedObj = hit.collider.gameObject;
-                        if (phase == 0 || phase == 2)
+                        if (clickedObj.CompareTag(attackerTag))
                         {
-                            if (clickedObj.CompareTag(attackerTag))
-                            {
-                                AddToHotbar(clickedObj);
-                                spawnedUnits.Remove(clickedObj); // Remove from spawned list
-                                Destroy(clickedObj);
-                            }
+                            AddToHotbar(clickedObj);
+                            spawnedUnits.Remove(clickedObj); // Remove from spawned list
+                            Destroy(clickedObj);
                         }
-                        else if (phase == 1 || phase == 3)
+                    }
+                    else if (phase == 1 || phase == 3)
+                    {
+                        if (clickedObj.CompareTag(defenderTag))
                         {
-                            if (clickedObj.CompareTag(defenderTag))
-                            {
-                                AddToHotbar(clickedObj);
-                                spawnedUnits.Remove(clickedObj); // Remove from spawned list
-                                Destroy(clickedObj);
-                            } 
+                            AddToHotbar(clickedObj);
+                            spawnedUnits.Remove(clickedObj); // Remove from spawned list
+                            Destroy(clickedObj);
                         }
                     }
                 }
@@ -227,7 +222,7 @@ public class Hotbar : MonoBehaviour
         {
             newUnit.tag = attackerTag;
         }
-        else if (phase == 1 || phase ==3)
+        else if (phase == 1 || phase == 3)
         {
             newUnit.tag = defenderTag;
         }
@@ -241,7 +236,7 @@ public class Hotbar : MonoBehaviour
 
         // Clear hotbar slot
         Images[selectedSlot].sprite = null;
-        Images[selectedSlot].color = Color.white;
+        Images[selectedSlot].color = new Color(1, 1, 1, 0f);
         itemPrefabs[selectedSlot] = null;
 
         // Destroy ghost & deselect
@@ -308,7 +303,7 @@ public class Hotbar : MonoBehaviour
             else
             {
                 Images[i].sprite = null;
-                Images[i].color = Color.white;
+                Images[i].color = new Color(1, 1, 1, 0.25f);
             }
         }
     }
@@ -342,7 +337,7 @@ public class Hotbar : MonoBehaviour
                 phase = 2;
                 TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
                 buttonText.text = "(Defender) \n Movement Phase";
-                
+
                 placementMode = false; // switch to movement mode
                 Debug.Log("Hotbar hidden, placementMode: " + placementMode);
 
