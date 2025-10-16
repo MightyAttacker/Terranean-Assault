@@ -134,11 +134,14 @@ public class Testing : MonoBehaviour
             return;
         }
 
+        pathfindingVisual.ClearHighlights();
+
         float cellSize = pathfinding.GetGrid().GetCellSize();
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
         Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
 
         selectedCharacter.SetTargetPosition(targetCenter);
+        selectedCharacter = null;
     }
 
     private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
