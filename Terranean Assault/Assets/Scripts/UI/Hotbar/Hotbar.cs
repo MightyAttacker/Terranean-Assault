@@ -75,13 +75,6 @@ public class Hotbar : MonoBehaviour
 
             button.onClick.AddListener(() => SelectSlot(index));
         }
-
-        // Add toggle mode button listener
-        if (toggleModeButton != null)
-            toggleModeButton.interactable = false;
-            toggleModeButton.onClick.AddListener(HideHotbar);
-            toggleModeButton.interactable = true;
-        HighlightSlot(-1);
     }
 
     void Update()
@@ -307,7 +300,7 @@ public class Hotbar : MonoBehaviour
             {
                 phase = 1;
                 TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
-                buttonText.text = "((Attacker) \n Movement Phase )";
+                buttonText.text = "(Attacker) \n Movement Phase";
 
                 itemPrefabs = new GameObject[Images.Length];
                 itemPrefabs[0] = Tank;
@@ -326,7 +319,7 @@ public class Hotbar : MonoBehaviour
             {
                 phase = 2;
                 TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
-                buttonText.text = "((Defender) \n Movement Phase )";
+                buttonText.text = "(Defender) \n Movement Phase";
                 
                 placementMode = false; // switch to movement mode
                 Debug.Log("Hotbar hidden, placementMode: " + placementMode);
@@ -347,19 +340,7 @@ public class Hotbar : MonoBehaviour
         }
         else
         {
-            if (itemPrefabs[0] == Tank &&
-                itemPrefabs[1] == Tank &&
-                itemPrefabs[2] == Tank &&
-                itemPrefabs[3] == Scout &&
-                itemPrefabs[4] == Tank &&
-                itemPrefabs[5] == Soldier &&
-                itemPrefabs[6] == Tank &&
-                itemPrefabs[7] == Tank &&
-                itemPrefabs[8] == Blank)
-            {
-                return;
-            }
-            else errorDisplay.ShowError("Please place all units first");
+            errorDisplay.ShowError("Please place all units first");
         }
     }
 
