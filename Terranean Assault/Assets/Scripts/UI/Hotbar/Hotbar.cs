@@ -283,22 +283,23 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-    public void TogglePlacementMode()
+public void TogglePlacementMode()
+{
+    placementMode = false; // switch to movement mode
+    Debug.Log("Hotbar hidden, placementMode: " + placementMode);
+
+    // Hide the panel (hotbar + all its child slots)
+    if (hotbarPanel != null)
+        hotbarPanel.SetActive(false);
+
+    // Destroy ghost & deselect
+    if (currentGhost != null)
     {
-        placementMode = !placementMode;
-
-        // Hide hotbar if entering movement mode
-        if (hotbarPanel != null)
-            hotbarPanel.SetActive(placementMode);
-
-        // Destroy ghost & deselect if switching to movement mode
-        if (!placementMode && currentGhost != null)
-        {
-            Destroy(currentGhost);
-            selectedSlot = -1;
-            HighlightSlot(-1);
-        }
+        Destroy(currentGhost);
+        selectedSlot = -1;
+        HighlightSlot(-1);
     }
+}
 
     GameObject FindPrefabByName(string name)
     {
