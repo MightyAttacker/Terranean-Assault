@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
+using TMPro;
+using System.Collections;
+using Unity.VisualScripting;
 
 public class Hotbar : MonoBehaviour
 {
@@ -19,8 +22,14 @@ public class Hotbar : MonoBehaviour
     public Image[] slots;
 
     [Header("Team Settings")]
-    [Tooltip("Tag that marks units you are allowed to pick up (e.g., 'LegionsImperius')")]
-    public string friendlyTag = "LegionsImperius";
+    [Tooltip("Attacker Tag (e.g., 'LegionsImperius')")]
+    public string attackerTag = "LegionsImperius";
+
+    [Tooltip("Defender Tag (e.g., 'MechanisedCommonwealth')")]
+    public string defenderTag = "MechanisedCommonwealth";
+
+    [Header("Error Display")]
+    public ErrorDisplay errorDisplay;
 
     [Header("Tracking Spawned Units")]
     [Tooltip("All spawned units for movement tracking.")]
@@ -29,11 +38,10 @@ public class Hotbar : MonoBehaviour
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
     public GameObject hotbarPanel;
-
     private int selectedSlot = -1;
     private GameObject currentGhost;
     private Camera mainCam;
-
+    public int phase = 0;
     // Predefined units
     public GameObject Blank;
     public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank;
@@ -70,82 +78,98 @@ public class Hotbar : MonoBehaviour
 
             button.onClick.AddListener(() => SelectSlot(index));
         }
-
-        // Add toggle mode button listener
-        if (toggleModeButton != null)
-            toggleModeButton.onClick.AddListener(TogglePlacementMode);
-
-        HighlightSlot(-1);
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.H)) // press H to toggle hotbar
-        TogglePlacementMode();
-        
-        if (!placementMode) return; // disable placement updates when in movement mode
-
-        Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorld.z = 0f;
-
-        // Number keys select hotbar
-        for (int i = 0; i < Images.Length; i++)
-            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
-                SelectSlot(i);
-
-        // === If ghost active (placing) ===
-        if (currentGhost != null)
+        //if (phase == 2 || phase == 3)
         {
-            // Snap to grid center
-            mouseWorld.x = Mathf.Floor(mouseWorld.x) + 0.5f;
-            mouseWorld.y = Mathf.Floor(mouseWorld.y) + 0.5f;
-            currentGhost.transform.position = mouseWorld;
+            if (!placementMode) return; // disable placement updates when in movement mode
 
-            // Check for wall tile
-            bool overWall = false;
-            if (WallTilemap != null)
+            Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorld.z = 0f;
+
+            // Number keys select hotbar
+            for (int i = 0; i < Images.Length; i++)
+                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+                    SelectSlot(i);
+
+            // === If ghost active (placing) ===
+            if (currentGhost != null)
             {
-                Vector3Int cellPos = WallTilemap.WorldToCell(mouseWorld);
-                overWall = WallTilemap.GetTile(cellPos) != null;
-            }
+                // Snap to grid center
+                mouseWorld.x = Mathf.Floor(mouseWorld.x) + 0.5f;
+                mouseWorld.y = Mathf.Floor(mouseWorld.y) + 0.5f;
+                currentGhost.transform.position = mouseWorld;
 
-            // Ghost color feedback
-            SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
-            foreach (var r in renderers)
-            {
-                Color c = overWall ? Color.red : Color.white;
-                c.a = 0.5f;
-                r.color = c;
-            }
-
-            // Left click = place
-            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !overWall)
-                PlaceItem(mouseWorld);
-
-            // Right click = cancel
-            if (Input.GetMouseButtonDown(1))
-                DeselectSlot();
-        }
-        // === Right click to pick up units while placing ===
-        else
-        {
-            if (Input.GetMouseButtonDown(1) && !EventSystem.current.IsPointerOverGameObject())
-            {
-                Vector2 mousePos2D = mainCam.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
-
-                if (hit.collider != null)
+                // Check for wall tile
+                bool overWall = false;
+                if (WallTilemap != null)
                 {
-                    GameObject clickedObj = hit.collider.gameObject;
-                    if (clickedObj.CompareTag(friendlyTag))
+                    Vector3Int cellPos = WallTilemap.WorldToCell(mouseWorld);
+                    overWall = WallTilemap.GetTile(cellPos) != null;
+                }
+
+                // Ghost color feedback
+                SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
+                foreach (var r in renderers)
+                {
+                    Color c = overWall ? Color.red : Color.white;
+                    c.a = 0.5f;
+                    r.color = c;
+                }
+
+                // Left click = place
+                if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !overWall)
+                    PlaceItem(mouseWorld);
+
+                // Right click = cancel
+                if (Input.GetMouseButtonDown(1))
+                    DeselectSlot();
+            }
+            // === Right click to pick up units while placing ===
+            else
+            {
+                if (Input.GetMouseButtonDown(1) && !EventSystem.current.IsPointerOverGameObject())
+                {
+                    Vector2 mousePos2D = mainCam.ScreenToWorldPoint(Input.mousePosition);
+                    RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
+
+                    if (hit.collider != null)
                     {
-                        AddToHotbar(clickedObj);
-                        spawnedUnits.Remove(clickedObj); // Remove from spawned list
-                        Destroy(clickedObj);
+                        GameObject clickedObj = hit.collider.gameObject;
+                        if (phase == 0 || phase == 2)
+                        {
+                            if (clickedObj.CompareTag(attackerTag))
+                            {
+                                AddToHotbar(clickedObj);
+                                spawnedUnits.Remove(clickedObj); // Remove from spawned list
+                                Destroy(clickedObj);
+                            }
+                        }
+                        else if (phase == 1 || phase == 3)
+                        {
+                            if (clickedObj.CompareTag(defenderTag))
+                            {
+                                AddToHotbar(clickedObj);
+                                spawnedUnits.Remove(clickedObj); // Remove from spawned list
+                                Destroy(clickedObj);
+                            } 
+                        }
                     }
                 }
             }
         }
+    }
+
+    bool IsHotbarEmpty()
+    {
+        foreach (var prefab in itemPrefabs)
+        {
+            if (prefab != null)
+                return false;
+        }
+        return true;
     }
 
     void SelectSlot(int index)
@@ -193,14 +217,20 @@ public class Hotbar : MonoBehaviour
             TileBase tile = WallTilemap.GetTile(cellPos);
             if (tile != null)
             {
-                Debug.Log("Cannot place on wall tile!");
                 return;
             }
         }
 
         GameObject prefab = itemPrefabs[selectedSlot];
         GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
-        newUnit.tag = friendlyTag;
+        if (phase == 0 || phase == 2)
+        {
+            newUnit.tag = attackerTag;
+        }
+        else if (phase == 1 || phase ==3)
+        {
+            newUnit.tag = defenderTag;
+        }
 
         // Attach identity so we can recover the prefab later
         UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
@@ -244,7 +274,7 @@ public class Hotbar : MonoBehaviour
             }
         }
 
-        Debug.Log("Hotbar full – cannot pick up more units!");
+        errorDisplay.ShowError("Hotbar full – cannot pick up more units!");
     }
 
     void SetGhostVisual(GameObject obj, bool isGhost)
@@ -283,23 +313,58 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-public void TogglePlacementMode()
-{
-    placementMode = false; // switch to movement mode
-    Debug.Log("Hotbar hidden, placementMode: " + placementMode);
-
-    // Hide the panel (hotbar + all its child slots)
-    if (hotbarPanel != null)
-        hotbarPanel.SetActive(false);
-
-    // Destroy ghost & deselect
-    if (currentGhost != null)
+    public void HideHotbar()
     {
-        Destroy(currentGhost);
-        selectedSlot = -1;
-        HighlightSlot(-1);
+        if (IsHotbarEmpty())
+        {
+
+            if (phase == 0)
+            {
+                phase = 1;
+                TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
+                buttonText.text = "(Attacker) \n Movement Phase";
+
+                itemPrefabs = new GameObject[Images.Length];
+                itemPrefabs[0] = AssaultLeader;
+                itemPrefabs[1] = AssaultSargent;
+                itemPrefabs[2] = AssaultTransport;
+                itemPrefabs[3] = AssaultTransport;
+                itemPrefabs[4] = AssaultSquad;
+                itemPrefabs[5] = AssaultSquad;
+                itemPrefabs[6] = AssaultSquad;
+                itemPrefabs[7] = AssaultSquad;
+                itemPrefabs[8] = AssaultSquad;
+
+                UpdateHotbarSprites();
+            }
+            else if (phase == 1)
+            {
+                phase = 2;
+                TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
+                buttonText.text = "(Defender) \n Movement Phase";
+                
+                placementMode = false; // switch to movement mode
+                Debug.Log("Hotbar hidden, placementMode: " + placementMode);
+
+                // Hide the panel (hotbar + all its child slots)
+                if (hotbarPanel != null)
+                    hotbarPanel.SetActive(false);
+
+                // Destroy ghost & deselect
+                if (currentGhost != null)
+                {
+                    Destroy(currentGhost);
+                    selectedSlot = -1;
+                    HighlightSlot(-1);
+                }
+            }
+
+        }
+        else
+        {
+            errorDisplay.ShowError("Please place all units first");
+        }
     }
-}
 
     GameObject FindPrefabByName(string name)
     {
