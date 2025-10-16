@@ -22,8 +22,11 @@ public class Hotbar : MonoBehaviour
     public Image[] slots;
 
     [Header("Team Settings")]
-    [Tooltip("Tag that marks units you are allowed to pick up (e.g., 'LegionsImperius')")]
-    public string friendlyTag = "LegionsImperius";
+    [Tooltip("Attacker Tag (e.g., 'LegionsImperius')")]
+    public string attackerTag = "LegionsImperius";
+
+    [Tooltip("Defender Tag (e.g., 'MechanisedCommonwealth')")]
+    public string defenderTag = "MechanisedCommonwealth";
 
     [Header("Error Display")]
     public ErrorDisplay errorDisplay;
@@ -135,11 +138,23 @@ public class Hotbar : MonoBehaviour
                     if (hit.collider != null)
                     {
                         GameObject clickedObj = hit.collider.gameObject;
-                        if (clickedObj.CompareTag(friendlyTag))
+                        if (phase == 0 || phase == 2)
                         {
-                            AddToHotbar(clickedObj);
-                            spawnedUnits.Remove(clickedObj); // Remove from spawned list
-                            Destroy(clickedObj);
+                            if (clickedObj.CompareTag(attackerTag))
+                            {
+                                AddToHotbar(clickedObj);
+                                spawnedUnits.Remove(clickedObj); // Remove from spawned list
+                                Destroy(clickedObj);
+                            }
+                        }
+                        else if (phase == 1 || phase == 3)
+                        {
+                            if (clickedObj.CompareTag(defenderTag))
+                            {
+                                AddToHotbar(clickedObj);
+                                spawnedUnits.Remove(clickedObj); // Remove from spawned list
+                                Destroy(clickedObj);
+                            } 
                         }
                     }
                 }
@@ -208,7 +223,14 @@ public class Hotbar : MonoBehaviour
 
         GameObject prefab = itemPrefabs[selectedSlot];
         GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
-        newUnit.tag = friendlyTag;
+        if (phase == 0 || phase == 2)
+        {
+            newUnit.tag = attackerTag;
+        }
+        else if (phase == 1 || phase ==3)
+        {
+            newUnit.tag = defenderTag;
+        }
 
         // Attach identity so we can recover the prefab later
         UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
@@ -303,15 +325,15 @@ public class Hotbar : MonoBehaviour
                 buttonText.text = "(Attacker) \n Movement Phase";
 
                 itemPrefabs = new GameObject[Images.Length];
-                itemPrefabs[0] = Tank;
-                itemPrefabs[1] = Tank;
-                itemPrefabs[2] = Tank;
-                itemPrefabs[3] = Scout;
-                itemPrefabs[4] = Tank;
-                itemPrefabs[5] = Soldier;
-                itemPrefabs[6] = Tank;
-                itemPrefabs[7] = Tank;
-                itemPrefabs[8] = Blank;
+                itemPrefabs[0] = AssaultLeader;
+                itemPrefabs[1] = AssaultSargent;
+                itemPrefabs[2] = AssaultTransport;
+                itemPrefabs[3] = AssaultTransport;
+                itemPrefabs[4] = AssaultSquad;
+                itemPrefabs[5] = AssaultSquad;
+                itemPrefabs[6] = AssaultSquad;
+                itemPrefabs[7] = AssaultSquad;
+                itemPrefabs[8] = AssaultSquad;
 
                 UpdateHotbarSprites();
             }
