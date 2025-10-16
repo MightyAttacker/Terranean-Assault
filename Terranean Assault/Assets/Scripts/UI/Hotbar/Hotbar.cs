@@ -46,6 +46,7 @@ public class Hotbar : MonoBehaviour
 
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
+    public GameObject PhaseTracker;
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
     public GameObject DefenderDZ;
@@ -61,7 +62,7 @@ public class Hotbar : MonoBehaviour
     {
         mainCam = Camera.main;
         DefenderDZ.SetActive(false);
-        
+
         // Initialize itemPrefabs
         itemPrefabs = new GameObject[Images.Length];
         itemPrefabs[0] = Engineer;
@@ -382,8 +383,8 @@ public class Hotbar : MonoBehaviour
                 phase = 1;
                 DefenderDZ.SetActive(true);
                 AttackerDZ.SetActive(false);
-                TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
-                buttonText.text = "(Attacker) \n Movement Phase";
+                TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
+                PhaseText.text = "(Defender) \n Deployment Phase";
 
                 itemPrefabs = new GameObject[Images.Length];
                 itemPrefabs[0] = AssaultLeader;
@@ -402,8 +403,8 @@ public class Hotbar : MonoBehaviour
             {
                 phase = 2;
                 DefenderDZ.SetActive(false);
-                TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
-                buttonText.text = "(Defender) \n Movement Phase";
+                TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
+                PhaseText.text = "(Attacker) \n Movement Phase";
 
                 // Hide the panel (hotbar + all its child slots)
                 if (hotbarPanel != null)
