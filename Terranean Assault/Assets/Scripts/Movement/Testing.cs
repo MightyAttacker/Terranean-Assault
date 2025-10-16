@@ -13,7 +13,6 @@ public class Testing : MonoBehaviour
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
-
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
@@ -39,6 +38,9 @@ public class Testing : MonoBehaviour
     {
         // Refresh character list dynamically
         UpdateCharacterList();
+
+        if (hotbar.phase == 0 || hotbar.phase == 1)
+            return;
 
         if (Input.GetMouseButtonDown(0))
         {
