@@ -31,6 +31,15 @@ public class Hotbar : MonoBehaviour
     [Header("Error Display")]
     public ErrorDisplay errorDisplay;
 
+    [Header("Placement Regions")]
+    [Tooltip("Allowed placement area for the attacker (bottom-left to top-right)")]
+    public Vector2 attackerRegionMin = new Vector2(-10f, -5f);
+    public Vector2 attackerRegionMax = new Vector2(-2f, 5f);
+
+    [Tooltip("Allowed placement area for the defender (bottom-left to top-right)")]
+    public Vector2 defenderRegionMin = new Vector2(2f, -5f);
+    public Vector2 defenderRegionMax = new Vector2(10f, 5f);
+
     [Header("Tracking Spawned Units")]
     [Tooltip("All spawned units for movement tracking.")]
     public List<GameObject> spawnedUnits = new List<GameObject>();
@@ -106,11 +115,29 @@ public class Hotbar : MonoBehaviour
                 overWall = WallTilemap.GetTile(cellPos) != null;
             }
 
-            // Ghost color feedback
+            // === Region + wall feedback ===
+            bool inValidRegion = true;
+
+            if (phase == 0)
+            {
+                inValidRegion =
+                    mouseWorld.x >= attackerRegionMin.x && mouseWorld.x <= attackerRegionMax.x &&
+                    mouseWorld.y >= attackerRegionMin.y && mouseWorld.y <= attackerRegionMax.y;
+            }
+            else if (phase == 1)
+            {
+                inValidRegion =
+                    mouseWorld.x >= defenderRegionMin.x && mouseWorld.x <= defenderRegionMax.x &&
+                    mouseWorld.y >= defenderRegionMin.y && mouseWorld.y <= defenderRegionMax.y;
+            }
+
+            // Combined condition: red if over wall OR outside region
+            bool invalidPlacement = overWall || !inValidRegion;
+
             SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
             foreach (var r in renderers)
             {
-                Color c = overWall ? Color.red : Color.white;
+                Color c = invalidPlacement ? Color.red : Color.white;
                 c.a = 0.5f;
                 r.color = c;
             }
@@ -203,46 +230,84 @@ public class Hotbar : MonoBehaviour
     }
 
     void PlaceItem(Vector3 position)
+{
+    if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
+        return;
+
+    // --- Check for wall tile ---
+    if (WallTilemap != null)
     {
-        if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null) return;
-
-        if (WallTilemap != null)
+        Vector3Int cellPos = WallTilemap.WorldToCell(position);
+        TileBase tile = WallTilemap.GetTile(cellPos);
+        if (tile != null)
         {
-            Vector3Int cellPos = WallTilemap.WorldToCell(position);
-            TileBase tile = WallTilemap.GetTile(cellPos);
-            if (tile != null)
-            {
-                return;
-            }
+            errorDisplay.ShowError("Cannot place unit here — wall in the way!");
+            return;
         }
-
-        GameObject prefab = itemPrefabs[selectedSlot];
-        GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
-        if (phase == 0 || phase == 2)
-        {
-            newUnit.tag = attackerTag;
-        }
-        else if (phase == 1 || phase == 3)
-        {
-            newUnit.tag = defenderTag;
-        }
-
-        // Attach identity so we can recover the prefab later
-        UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
-        id.sourcePrefab = prefab;
-
-        // Add to spawned units list
-        spawnedUnits.Add(newUnit);
-
-        // Clear hotbar slot
-        Images[selectedSlot].sprite = null;
-        Images[selectedSlot].color = new Color(1, 1, 1, 0f);
-        itemPrefabs[selectedSlot] = null;
-
-        // Destroy ghost & deselect
-        Destroy(currentGhost);
-        DeselectSlot();
     }
+
+    // --- Check region by phase ---
+    bool inValidRegion = true;
+
+    if (phase == 0) // Attacker placement
+    {
+        inValidRegion =
+            position.x >= attackerRegionMin.x && position.x <= attackerRegionMax.x &&
+            position.y >= attackerRegionMin.y && position.y <= attackerRegionMax.y;
+
+        if (!inValidRegion)
+        {
+            errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
+            return;
+        }
+    }
+    else if (phase == 1) // Defender placement
+    {
+        inValidRegion =
+            position.x >= defenderRegionMin.x && position.x <= defenderRegionMax.x &&
+            position.y >= defenderRegionMin.y && position.y <= defenderRegionMax.y;
+
+        if (!inValidRegion)
+        {
+            errorDisplay.ShowError("Cannot place unit here — outside defender region!");
+            return;
+        }
+    }
+
+    // --- Check for overlapping unit ---
+    Collider2D hit = Physics2D.OverlapCircle(position, 0.4f);
+    if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+    {
+        errorDisplay.ShowError("Cannot place unit here — another unit is in the way!");
+        return;
+    }
+
+    // --- Instantiate unit ---
+    GameObject prefab = itemPrefabs[selectedSlot];
+    GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
+
+    // Assign team tag
+    if (phase == 0 || phase == 2)
+        newUnit.tag = attackerTag;
+    else if (phase == 1 || phase == 3)
+        newUnit.tag = defenderTag;
+
+    // Attach identity for recovery later
+    UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
+    id.sourcePrefab = prefab;
+
+    spawnedUnits.Add(newUnit);
+
+    // Clear hotbar slot
+    Images[selectedSlot].sprite = null;
+    Images[selectedSlot].color = new Color(1, 1, 1, 0f);
+    itemPrefabs[selectedSlot] = null;
+
+    // Destroy ghost & deselect
+    Destroy(currentGhost);
+    DeselectSlot();
+}
+
 
     void AddToHotbar(GameObject obj)
     {

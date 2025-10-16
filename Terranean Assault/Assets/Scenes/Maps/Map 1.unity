@@ -1291,6 +1291,10 @@ MonoBehaviour:
   attackerTag: LegionsImperius
   defenderTag: MechanisedCommonwealth
   errorDisplay: {fileID: 77888447}
+  attackerRegionMin: {x: 0, y: 0}
+  attackerRegionMax: {x: 10, y: 30}
+  defenderRegionMin: {x: 34, y: 0}
+  defenderRegionMax: {x: 44, y: 30}
   spawnedUnits: []
   toggleModeButton: {fileID: 233264670}
   hotbarPanel: {fileID: 1312926654}
