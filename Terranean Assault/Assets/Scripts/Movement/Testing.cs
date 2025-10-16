@@ -13,6 +13,9 @@ public class Testing : MonoBehaviour
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
+    int[] attackerMovementPhases = { 2, 6, 10, 14, 18 };
+    int[] defenderMovementPhases = { 4, 8, 12, 16, 20 };
+    
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
@@ -91,12 +94,22 @@ public class Testing : MonoBehaviour
             var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
-                selectedCharacter = clickedCharacter;
-                HighlightMovementRange(selectedCharacter);
-                Debug.Log($"Selected character: {selectedCharacter.name}");
+                // Enforce tag check
+                if ((System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
+        (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag)))
+                {
+                    selectedCharacter = clickedCharacter;
+                    HighlightMovementRange(selectedCharacter);
+                    Debug.Log($"Selected character: {selectedCharacter.name}");
+                }
+                else
+                {
+                    Debug.Log("Cannot select this unit in the current phase.");
+                }
             }
         }
     }
+
 
     private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
     {
