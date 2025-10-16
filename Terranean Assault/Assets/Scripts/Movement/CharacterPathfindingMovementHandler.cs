@@ -14,6 +14,7 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     private Rigidbody2D rb;
     private bool isMoving = false;
     private int lastMovedPhase = -1;
+    private Vector3 lastPositionBeforeMove;
     public int LastMovedPhase => lastMovedPhase;
     [SerializeField] private float maxMoveDistance = 6f;
 
@@ -108,13 +109,33 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
             return false;
         }
 
+        // Save current position to allow undo
+        lastPositionBeforeMove = transform.position;
+
         SetTargetPosition(targetPosition);
         lastMovedPhase = currentPhase;
         return true;
     }
 
+
+    // Existing method (no arguments)
     public void ResetMovementPhase()
     {
-        lastMovedPhase = -1;
+        ResetMovementPhase(false);
     }
+
+    // New overload with argument
+    public void ResetMovementPhase(bool restorePosition)
+    {
+        lastMovedPhase = -1;
+
+        if (restorePosition)
+        {
+            transform.position = lastPositionBeforeMove;
+            pathVectorList = null; // stop any current movement
+            isMoving = false;
+        }
+    }
+
+
 }

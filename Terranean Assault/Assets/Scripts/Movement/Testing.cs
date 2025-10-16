@@ -45,15 +45,42 @@ public class Testing : MonoBehaviour
         if (hotbar.phase == 0 || hotbar.phase == 1)
             return;
 
-        if (Input.GetMouseButtonDown(0))
+        Vector3 mouseWorld = UtilsClass.GetMouseWorldPosition();
+
+        if (Input.GetMouseButtonDown(0)) // Left-click
         {
-            Vector3 mouseWorld = UtilsClass.GetMouseWorldPosition();
             TrySelectCharacter(mouseWorld);
 
             if (selectedCharacter != null && !IsClickOnCharacter(mouseWorld))
                 TryMoveSelectedCharacter(mouseWorld);
         }
+
+        if (Input.GetMouseButtonDown(1)) // Right-click
+        {
+            TryUndoMove(mouseWorld);
+        }
     }
+
+    private void TryUndoMove(Vector3 mouseWorldPosition)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+
+        if (hit.collider != null)
+        {
+            var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+            if (clickedCharacter != null && characters.Contains(clickedCharacter))
+            {
+                // Only undo if this unit moved in the current phase
+                if (clickedCharacter.LastMovedPhase == hotbar.phase)
+                {
+                    clickedCharacter.ResetMovementPhase(true); // restore position
+                    Debug.Log($"{clickedCharacter.name}'s move has been undone for phase {hotbar.phase}.");
+                }
+            }
+        }
+    }
+
+
 
     private void UpdateCharacterList()
     {
