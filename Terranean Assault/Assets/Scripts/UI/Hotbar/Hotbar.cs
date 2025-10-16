@@ -47,6 +47,8 @@ public class Hotbar : MonoBehaviour
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
     public GameObject hotbarPanel;
+    public GameObject AttackerDZ;
+    public GameObject DefenderDZ;
     private int selectedSlot = -1;
     private GameObject currentGhost;
     private Camera mainCam;
@@ -55,14 +57,11 @@ public class Hotbar : MonoBehaviour
     public GameObject Blank;
     public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank;
     public GameObject AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport;
-
-    [HideInInspector]
-    public bool placementMode = true; // true = placing units, false = moving units
-
     void Start()
     {
         mainCam = Camera.main;
-
+        DefenderDZ.SetActive(false);
+        
         // Initialize itemPrefabs
         itemPrefabs = new GameObject[Images.Length];
         itemPrefabs[0] = Engineer;
@@ -373,7 +372,7 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-    public void HideHotbar()
+    public void Phases()
     {
         if (IsHotbarEmpty())
         {
@@ -381,6 +380,8 @@ public class Hotbar : MonoBehaviour
             if (phase == 0)
             {
                 phase = 1;
+                DefenderDZ.SetActive(true);
+                AttackerDZ.SetActive(false);
                 TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
                 buttonText.text = "(Attacker) \n Movement Phase";
 
@@ -400,11 +401,9 @@ public class Hotbar : MonoBehaviour
             else if (phase == 1)
             {
                 phase = 2;
+                DefenderDZ.SetActive(false);
                 TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
                 buttonText.text = "(Defender) \n Movement Phase";
-
-                placementMode = false; // switch to movement mode
-                Debug.Log("Hotbar hidden, placementMode: " + placementMode);
 
                 // Hide the panel (hotbar + all its child slots)
                 if (hotbarPanel != null)
