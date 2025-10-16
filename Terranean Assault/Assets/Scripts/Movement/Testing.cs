@@ -13,6 +13,9 @@ public class Testing : MonoBehaviour
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
+    int[] attackerMovementPhases = { 2, 6, 10, 14, 18 };
+    int[] defenderMovementPhases = { 4, 8, 12, 16, 20 };
+
     private void Start()
     {
         StartCoroutine(InitAfterTilemap());
@@ -42,15 +45,42 @@ public class Testing : MonoBehaviour
         if (hotbar.phase == 0 || hotbar.phase == 1)
             return;
 
-        if (Input.GetMouseButtonDown(0))
+        Vector3 mouseWorld = UtilsClass.GetMouseWorldPosition();
+
+        if (Input.GetMouseButtonDown(0)) // Left-click
         {
-            Vector3 mouseWorld = UtilsClass.GetMouseWorldPosition();
             TrySelectCharacter(mouseWorld);
 
             if (selectedCharacter != null && !IsClickOnCharacter(mouseWorld))
                 TryMoveSelectedCharacter(mouseWorld);
         }
+
+        if (Input.GetMouseButtonDown(1)) // Right-click
+        {
+            TryUndoMove(mouseWorld);
+        }
     }
+
+    private void TryUndoMove(Vector3 mouseWorldPosition)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+
+        if (hit.collider != null)
+        {
+            var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+            if (clickedCharacter != null && characters.Contains(clickedCharacter))
+            {
+                // Only undo if this unit moved in the current phase
+                if (clickedCharacter.LastMovedPhase == hotbar.phase)
+                {
+                    clickedCharacter.ResetMovementPhase(true); // restore position
+                    Debug.Log($"{clickedCharacter.name}'s move has been undone for phase {hotbar.phase}.");
+                }
+            }
+        }
+    }
+
+
 
     private void UpdateCharacterList()
     {
@@ -91,12 +121,34 @@ public class Testing : MonoBehaviour
             var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
-                selectedCharacter = clickedCharacter;
-                HighlightMovementRange(selectedCharacter);
-                Debug.Log($"Selected character: {selectedCharacter.name}");
+                // FIRST: Check if unit has already moved this phase
+                if (clickedCharacter.LastMovedPhase == hotbar.phase)
+                {
+                    Debug.Log($"{clickedCharacter.name} has already moved in phase {hotbar.phase}.");
+                    return; // Don't allow selection or highlight
+                }
+
+                // THEN: Check if unit matches current phase tag
+                bool canSelect =
+                    (System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
+                    (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag));
+
+                if (canSelect)
+                {
+                    selectedCharacter = clickedCharacter;
+                    HighlightMovementRange(selectedCharacter);
+                    Debug.Log($"Selected character: {selectedCharacter.name}");
+                }
+                else
+                {
+                    Debug.Log("Cannot select this unit in the current phase.");
+                }
             }
         }
     }
+
+
+
 
     private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
     {
@@ -134,11 +186,16 @@ public class Testing : MonoBehaviour
             return;
         }
 
+        pathfindingVisual.ClearHighlights();
+
         float cellSize = pathfinding.GetGrid().GetCellSize();
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
         Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
 
-        selectedCharacter.SetTargetPosition(targetCenter);
+        if (selectedCharacter.TryMove(targetCenter, hotbar.phase))
+        {
+            selectedCharacter = null;
+        }
     }
 
     private void HighlightMovementRange(CharacterPathfindingMovementHandler character)

@@ -46,12 +46,38 @@ public class Hotbar : MonoBehaviour
 
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
+    public GameObject PhaseTracker;
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
     public GameObject DefenderDZ;
     private int selectedSlot = -1;
     private GameObject currentGhost;
     private Camera mainCam;
+    private string[] phaseTexts = new string[]
+{
+    "(Defender) \n Deployment Phase",
+    "(Attacker) \n 1st Movement Phase",
+    "(Attacker) \n 1st Fight Phase",
+    "(Defender) \n 1st Movement Phase",
+    "(Defender) \n 1st Fight Phase",
+    "(Attacker) \n 2nd Movement Phase",
+    "(Attacker) \n 2nd Fight Phase",
+    "(Defender) \n 2nd Movement Phase",
+    "(Defender) \n 2nd Fight Phase",
+    "(Attacker) \n 3rd Movement Phase",
+    "(Attacker) \n 3rd Fight Phase",
+    "(Defender) \n 3rd Movement Phase",
+    "(Defender) \n 3rd Fight Phase",
+    "(Attacker) \n 4th Movement Phase",
+    "(Attacker) \n 4th Fight Phase",
+    "(Defender) \n 4th Movement Phase",
+    "(Defender) \n 4th Fight Phase",
+    "(Attacker) \n 5th Movement Phase",
+    "(Attacker) \n 5th Fight Phase",
+    "(Defender) \n 5th Movement Phase",
+    "(Defender) \n 5th Fight Phase"
+};
+
     public int phase = 0;
     // Predefined units
     public GameObject Blank;
@@ -61,7 +87,7 @@ public class Hotbar : MonoBehaviour
     {
         mainCam = Camera.main;
         DefenderDZ.SetActive(false);
-        
+
         // Initialize itemPrefabs
         itemPrefabs = new GameObject[Images.Length];
         itemPrefabs[0] = Engineer;
@@ -160,7 +186,7 @@ public class Hotbar : MonoBehaviour
                 if (hit.collider != null)
                 {
                     GameObject clickedObj = hit.collider.gameObject;
-                    if (phase == 0 || phase == 2)
+                    if (phase == 0)
                     {
                         if (clickedObj.CompareTag(attackerTag))
                         {
@@ -169,7 +195,7 @@ public class Hotbar : MonoBehaviour
                             Destroy(clickedObj);
                         }
                     }
-                    else if (phase == 1 || phase == 3)
+                    else if (phase == 1)
                     {
                         if (clickedObj.CompareTag(defenderTag))
                         {
@@ -229,83 +255,83 @@ public class Hotbar : MonoBehaviour
     }
 
     void PlaceItem(Vector3 position)
-{
-    if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
-        return;
-
-    // --- Check for wall tile ---
-    if (WallTilemap != null)
     {
-        Vector3Int cellPos = WallTilemap.WorldToCell(position);
-        TileBase tile = WallTilemap.GetTile(cellPos);
-        if (tile != null)
+        if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
+            return;
+
+        // --- Check for wall tile ---
+        if (WallTilemap != null)
         {
-            errorDisplay.ShowError("Cannot place unit here — wall in the way!");
+            Vector3Int cellPos = WallTilemap.WorldToCell(position);
+            TileBase tile = WallTilemap.GetTile(cellPos);
+            if (tile != null)
+            {
+                errorDisplay.ShowError("Cannot place unit here — wall in the way!");
+                return;
+            }
+        }
+
+        // --- Check region by phase ---
+        bool inValidRegion = true;
+
+        if (phase == 0) // Attacker placement
+        {
+            inValidRegion =
+                position.x >= attackerRegionMin.x && position.x <= attackerRegionMax.x &&
+                position.y >= attackerRegionMin.y && position.y <= attackerRegionMax.y;
+
+            if (!inValidRegion)
+            {
+                errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
+                return;
+            }
+        }
+        else if (phase == 1) // Defender placement
+        {
+            inValidRegion =
+                position.x >= defenderRegionMin.x && position.x <= defenderRegionMax.x &&
+                position.y >= defenderRegionMin.y && position.y <= defenderRegionMax.y;
+
+            if (!inValidRegion)
+            {
+                errorDisplay.ShowError("Cannot place unit here — outside defender region!");
+                return;
+            }
+        }
+
+        // --- Check for overlapping unit ---
+        Collider2D hit = Physics2D.OverlapCircle(position, 0.4f);
+        if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+        {
+            errorDisplay.ShowError("Cannot place unit here — another unit is in the way!");
             return;
         }
+
+        // --- Instantiate unit ---
+        GameObject prefab = itemPrefabs[selectedSlot];
+        GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
+
+        // Assign team tag
+        if (phase == 0)
+            newUnit.tag = attackerTag;
+        else if (phase == 1)
+            newUnit.tag = defenderTag;
+
+        // Attach identity for recovery later
+        UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
+        id.sourcePrefab = prefab;
+
+        spawnedUnits.Add(newUnit);
+
+        // Clear hotbar slot
+        Images[selectedSlot].sprite = null;
+        Images[selectedSlot].color = new Color(1, 1, 1, 0f);
+        itemPrefabs[selectedSlot] = null;
+
+        // Destroy ghost & deselect
+        Destroy(currentGhost);
+        DeselectSlot();
     }
-
-    // --- Check region by phase ---
-    bool inValidRegion = true;
-
-    if (phase == 0) // Attacker placement
-    {
-        inValidRegion =
-            position.x >= attackerRegionMin.x && position.x <= attackerRegionMax.x &&
-            position.y >= attackerRegionMin.y && position.y <= attackerRegionMax.y;
-
-        if (!inValidRegion)
-        {
-            errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
-            return;
-        }
-    }
-    else if (phase == 1) // Defender placement
-    {
-        inValidRegion =
-            position.x >= defenderRegionMin.x && position.x <= defenderRegionMax.x &&
-            position.y >= defenderRegionMin.y && position.y <= defenderRegionMax.y;
-
-        if (!inValidRegion)
-        {
-            errorDisplay.ShowError("Cannot place unit here — outside defender region!");
-            return;
-        }
-    }
-
-    // --- Check for overlapping unit ---
-    Collider2D hit = Physics2D.OverlapCircle(position, 0.4f);
-    if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
-    {
-        errorDisplay.ShowError("Cannot place unit here — another unit is in the way!");
-        return;
-    }
-
-    // --- Instantiate unit ---
-    GameObject prefab = itemPrefabs[selectedSlot];
-    GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
-
-    // Assign team tag
-    if (phase == 0 || phase == 2)
-        newUnit.tag = attackerTag;
-    else if (phase == 1 || phase == 3)
-        newUnit.tag = defenderTag;
-
-    // Attach identity for recovery later
-    UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
-    id.sourcePrefab = prefab;
-
-    spawnedUnits.Add(newUnit);
-
-    // Clear hotbar slot
-    Images[selectedSlot].sprite = null;
-    Images[selectedSlot].color = new Color(1, 1, 1, 0f);
-    itemPrefabs[selectedSlot] = null;
-
-    // Destroy ghost & deselect
-    Destroy(currentGhost);
-    DeselectSlot();
-}
 
 
     void AddToHotbar(GameObject obj)
@@ -372,58 +398,56 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-    public void Phases()
+public void Phases()
+{
+    if (!IsHotbarEmpty())
     {
-        if (IsHotbarEmpty())
+        errorDisplay.ShowError("Please place all units first");
+        return;
+    }
+
+    // Handle special logic for specific phases
+    if (phase == 0)
+    {
+        DefenderDZ.SetActive(true);
+        AttackerDZ.SetActive(false);
+
+        itemPrefabs = new GameObject[Images.Length];
+        itemPrefabs[0] = AssaultLeader;
+        itemPrefabs[1] = AssaultSargent;
+        itemPrefabs[2] = AssaultTransport;
+        itemPrefabs[3] = AssaultTransport;
+        itemPrefabs[4] = AssaultSquad;
+        itemPrefabs[5] = AssaultSquad;
+        itemPrefabs[6] = AssaultSquad;
+        itemPrefabs[7] = AssaultSquad;
+        itemPrefabs[8] = AssaultSquad;
+
+        UpdateHotbarSprites();
+    }
+    else if (phase == 1)
+    {
+        DefenderDZ.SetActive(false);
+
+        if (hotbarPanel != null)
+            hotbarPanel.SetActive(false);
+
+        if (currentGhost != null)
         {
-
-            if (phase == 0)
-            {
-                phase = 1;
-                DefenderDZ.SetActive(true);
-                AttackerDZ.SetActive(false);
-                TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
-                buttonText.text = "(Attacker) \n Movement Phase";
-
-                itemPrefabs = new GameObject[Images.Length];
-                itemPrefabs[0] = AssaultLeader;
-                itemPrefabs[1] = AssaultSargent;
-                itemPrefabs[2] = AssaultTransport;
-                itemPrefabs[3] = AssaultTransport;
-                itemPrefabs[4] = AssaultSquad;
-                itemPrefabs[5] = AssaultSquad;
-                itemPrefabs[6] = AssaultSquad;
-                itemPrefabs[7] = AssaultSquad;
-                itemPrefabs[8] = AssaultSquad;
-
-                UpdateHotbarSprites();
-            }
-            else if (phase == 1)
-            {
-                phase = 2;
-                DefenderDZ.SetActive(false);
-                TMP_Text buttonText = toggleModeButton.GetComponentInChildren<TMP_Text>();
-                buttonText.text = "(Defender) \n Movement Phase";
-
-                // Hide the panel (hotbar + all its child slots)
-                if (hotbarPanel != null)
-                    hotbarPanel.SetActive(false);
-
-                // Destroy ghost & deselect
-                if (currentGhost != null)
-                {
-                    Destroy(currentGhost);
-                    selectedSlot = -1;
-                    HighlightSlot(-1);
-                }
-            }
-
-        }
-        else
-        {
-            errorDisplay.ShowError("Please place all units first");
+            Destroy(currentGhost);
+            selectedSlot = -1;
+            HighlightSlot(-1);
         }
     }
+
+    // Set phase text via lookup table
+    TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
+    if (phase >= 0 && phase < phaseTexts.Length)
+        PhaseText.text = phaseTexts[phase];
+
+    phase++;
+}
+
 
     GameObject FindPrefabByName(string name)
     {

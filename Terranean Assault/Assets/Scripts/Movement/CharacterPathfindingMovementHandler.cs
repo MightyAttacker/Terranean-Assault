@@ -13,13 +13,10 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     private List<Vector3> pathVectorList;
     private Rigidbody2D rb;
     private bool isMoving = false;
-
+    private int lastMovedPhase = -1;
+    private Vector3 lastPositionBeforeMove;
+    public int LastMovedPhase => lastMovedPhase;
     [SerializeField] private float maxMoveDistance = 6f;
-
-    public float GetMaxMoveDistance()
-    {
-        return maxMoveDistance;
-    }
 
     private void Awake()
     {
@@ -50,31 +47,23 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
             if (distanceToTarget > 0f)
             {
                 moveDir /= distanceToTarget; // normalize
-
                 float moveDistance = speed * Time.deltaTime;
-
-                // Clamp to not overshoot
                 float distanceToMove = Mathf.Min(moveDistance, distanceToTarget);
 
                 transform.position += moveDir * distanceToMove;
 
-                // If we've reached or passed the target position, move to next node
                 if (distanceToMove >= distanceToTarget)
                 {
                     currentPathIndex++;
                     if (currentPathIndex >= pathVectorList.Count)
-                    {
                         StopMoving();
-                    }
                 }
             }
             else
             {
                 currentPathIndex++;
                 if (currentPathIndex >= pathVectorList.Count)
-                {
                     StopMoving();
-                }
             }
         }
     }
@@ -89,9 +78,15 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
         }
     }
 
+
     public Vector3 GetPosition()
     {
         return transform.position;
+    }
+
+    public float GetMaxMoveDistance()
+    {
+        return maxMoveDistance;
     }
 
     public void SetTargetPosition(Vector3 targetPosition)
@@ -100,16 +95,47 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
         pathVectorList = Pathfinding.Instance.FindPath(GetPosition(), targetPosition);
 
         if (pathVectorList != null && pathVectorList.Count > 1)
+            pathVectorList.RemoveAt(0);
+    }
+
+    /// <summary>
+    /// Attempt to move the unit for the current phase. Returns true if move starts.
+    /// </summary>
+    public bool TryMove(Vector3 targetPosition, int currentPhase)
+    {
+        if (lastMovedPhase == currentPhase)
         {
-            pathVectorList.RemoveAt(0); // remove current position node, optional
+            Debug.Log($"{name} has already moved in phase {currentPhase}.");
+            return false;
         }
 
-        // No need to add targetPosition explicitly because path ends there
-        // Optionally snap targetPosition to last node for smooth movement
-        if (pathVectorList != null && pathVectorList.Count > 0)
+        // Save current position to allow undo
+        lastPositionBeforeMove = transform.position;
+
+        SetTargetPosition(targetPosition);
+        lastMovedPhase = currentPhase;
+        return true;
+    }
+
+
+    // Existing method (no arguments)
+    public void ResetMovementPhase()
+    {
+        ResetMovementPhase(false);
+    }
+
+    // New overload with argument
+    public void ResetMovementPhase(bool restorePosition)
+    {
+        lastMovedPhase = -1;
+
+        if (restorePosition)
         {
-            Vector3 lastNodePos = pathVectorList[pathVectorList.Count - 1];
-            pathVectorList[pathVectorList.Count - 1] = lastNodePos;
+            transform.position = lastPositionBeforeMove;
+            pathVectorList = null; // stop any current movement
+            isMoving = false;
         }
     }
+
+
 }
