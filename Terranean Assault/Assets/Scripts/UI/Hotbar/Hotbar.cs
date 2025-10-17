@@ -50,33 +50,50 @@ public class Hotbar : MonoBehaviour
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
     public GameObject DefenderDZ;
+    public GameObject LeftClick;
+    public GameObject RightClick;
     private int selectedSlot = -1;
     private GameObject currentGhost;
     private Camera mainCam;
     private string[] phaseTexts = new string[]
 {
-    "(Defender) \n Deployment Phase",
-    "(Attacker) \n 1st Movement Phase",
-    "(Attacker) \n 1st Fight Phase",
-    "(Defender) \n 1st Movement Phase",
-    "(Defender) \n 1st Fight Phase",
-    "(Attacker) \n 2nd Movement Phase",
-    "(Attacker) \n 2nd Fight Phase",
-    "(Defender) \n 2nd Movement Phase",
-    "(Defender) \n 2nd Fight Phase",
-    "(Attacker) \n 3rd Movement Phase",
-    "(Attacker) \n 3rd Fight Phase",
-    "(Defender) \n 3rd Movement Phase",
-    "(Defender) \n 3rd Fight Phase",
-    "(Attacker) \n 4th Movement Phase",
-    "(Attacker) \n 4th Fight Phase",
-    "(Defender) \n 4th Movement Phase",
-    "(Defender) \n 4th Fight Phase",
-    "(Attacker) \n 5th Movement Phase",
-    "(Attacker) \n 5th Fight Phase",
-    "(Defender) \n 5th Movement Phase",
-    "(Defender) \n 5th Fight Phase"
+    //"(Defender) \n Deployment Phase", //0
+    "(Defender) \n Deployment Phase", //1
+    "(Attacker) \n 1st Movement Phase", //2
+    "(Attacker) \n 1st Fight Phase", //3
+    "(Defender) \n 1st Movement Phase", //4
+    "(Defender) \n 1st Fight Phase", //5
+    "(Attacker) \n 2nd Movement Phase", //6
+    "(Attacker) \n 2nd Fight Phase", //7
+    "(Defender) \n 2nd Movement Phase", //8
+    "(Defender) \n 2nd Fight Phase", //9
+    "(Attacker) \n 3rd Movement Phase", //10
+    "(Attacker) \n 3rd Fight Phase", //11
+    "(Defender) \n 3rd Movement Phase", //12
+    "(Defender) \n 3rd Fight Phase", //13
+    "(Attacker) \n 4th Movement Phase", //14
+    "(Attacker) \n 4th Fight Phase", //15
+    "(Defender) \n 4th Movement Phase", //16
+    "(Defender) \n 4th Fight Phase", //17
+    "(Attacker) \n 5th Movement Phase", //18
+    "(Attacker) \n 5th Fight Phase", //19
+    "(Defender) \n 5th Movement Phase", //20
+    "(Defender) \n 5th Fight Phase" //21
 };
+
+    private string[] LeftClickTxts = new string[]
+    {
+    //"Left Click - \n Select/Place Unit", //0-1
+    "Left Click - \nSelect/Move Unit", //2/4/6/8/10/12/14/16/18/20
+    "Left Click - \nSelect/Shoot Unit", //3/5/7/9/11/13/15/17/19/21
+    };
+
+    private string[] RightClickTxts = new string[]
+    {
+    //"Right Click - \n Deployment Phase", //0-1
+    "Right Click - \nUndo Move", //2/4/6/8/10/12/14/16/18/20
+    "Right Click - \nPunch", //3/5/7/9/11/13/15/17/19/21
+    };
 
     public int phase = 0;
     // Predefined units
@@ -398,55 +415,69 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-public void Phases()
-{
-    if (!IsHotbarEmpty())
+    public void Phases()
     {
-        errorDisplay.ShowError("Please place all units first");
-        return;
-    }
-
-    // Handle special logic for specific phases
-    if (phase == 0)
-    {
-        DefenderDZ.SetActive(true);
-        AttackerDZ.SetActive(false);
-
-        itemPrefabs = new GameObject[Images.Length];
-        itemPrefabs[0] = AssaultLeader;
-        itemPrefabs[1] = AssaultSargent;
-        itemPrefabs[2] = AssaultTransport;
-        itemPrefabs[3] = AssaultTransport;
-        itemPrefabs[4] = AssaultSquad;
-        itemPrefabs[5] = AssaultSquad;
-        itemPrefabs[6] = AssaultSquad;
-        itemPrefabs[7] = AssaultSquad;
-        itemPrefabs[8] = AssaultSquad;
-
-        UpdateHotbarSprites();
-    }
-    else if (phase == 1)
-    {
-        DefenderDZ.SetActive(false);
-
-        if (hotbarPanel != null)
-            hotbarPanel.SetActive(false);
-
-        if (currentGhost != null)
+        if (!IsHotbarEmpty())
         {
-            Destroy(currentGhost);
-            selectedSlot = -1;
-            HighlightSlot(-1);
+            errorDisplay.ShowError("Please place all units first");
+            return;
         }
+
+        // Handle special logic for specific phases
+        if (phase == 0)
+        {
+            DefenderDZ.SetActive(true);
+            AttackerDZ.SetActive(false);
+
+            itemPrefabs = new GameObject[Images.Length];
+            itemPrefabs[0] = AssaultLeader;
+            itemPrefabs[1] = AssaultSargent;
+            itemPrefabs[2] = AssaultTransport;
+            itemPrefabs[3] = AssaultTransport;
+            itemPrefabs[4] = AssaultSquad;
+            itemPrefabs[5] = AssaultSquad;
+            itemPrefabs[6] = AssaultSquad;
+            itemPrefabs[7] = AssaultSquad;
+            itemPrefabs[8] = AssaultSquad;
+
+            UpdateHotbarSprites();
+        }
+        else if (phase == 1)
+        {
+            DefenderDZ.SetActive(false);
+
+            if (hotbarPanel != null)
+                hotbarPanel.SetActive(false);
+
+            if (currentGhost != null)
+            {
+                Destroy(currentGhost);
+                selectedSlot = -1;
+                HighlightSlot(-1);
+            }
+        }
+
+        // Set phase text via lookup table
+        TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
+        if (phase >= 0 && phase < phaseTexts.Length)
+            PhaseText.text = phaseTexts[phase];
+
+        TMP_Text LeftClickTxt = LeftClick.GetComponentInChildren<TMP_Text>();
+        TMP_Text RightClickTxt = RightClick.GetComponentInChildren<TMP_Text>();
+
+        if (phase == 0)
+        {
+            // Do nothing
+        }
+        else
+        {
+            // phase is even → index 1, odd → index 0
+            int index = (phase % 2 == 0) ? 1 : 0;
+            LeftClickTxt.text = LeftClickTxts[index];
+            RightClickTxt.text = RightClickTxts[index];
+        }
+        phase++;
     }
-
-    // Set phase text via lookup table
-    TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
-    if (phase >= 0 && phase < phaseTexts.Length)
-        PhaseText.text = phaseTexts[phase];
-
-    phase++;
-}
 
 
     GameObject FindPrefabByName(string name)
