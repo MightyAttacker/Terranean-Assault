@@ -31,7 +31,7 @@ public class Hotbar : MonoBehaviour
     [Header("Error Display")]
     public ErrorDisplay errorDisplay;
 
-    [Header("Placement Regions")]
+    [Header("Regions")]
     [Tooltip("Allowed placement area for the attacker (bottom-left to top-right)")]
     public Vector2 attackerRegionMin = new Vector2(-10f, -5f);
     public Vector2 attackerRegionMax = new Vector2(-2f, 5f);
@@ -46,12 +46,18 @@ public class Hotbar : MonoBehaviour
 
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
+    public Button toggleObjectives;
     public GameObject PhaseTracker;
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
     public GameObject DefenderDZ;
+    public GameObject Objective1;
+    public GameObject Objective2;
+    public GameObject Objective3;
+    public GameObject Objective4;
     public GameObject LeftClick;
     public GameObject RightClick;
+    private int ObjectiveToggle = 0;
     private int selectedSlot = -1;
     private GameObject currentGhost;
     private Camera mainCam;
@@ -104,6 +110,11 @@ public class Hotbar : MonoBehaviour
     {
         mainCam = Camera.main;
         DefenderDZ.SetActive(false);
+        Objective1.SetActive(false);
+        Objective2.SetActive(false);
+        Objective3.SetActive(false);
+        Objective4.SetActive(false);
+
 
         // Initialize itemPrefabs
         itemPrefabs = new GameObject[Images.Length];
@@ -445,6 +456,11 @@ public class Hotbar : MonoBehaviour
         else if (phase == 1)
         {
             DefenderDZ.SetActive(false);
+            Objective1.SetActive(true);
+            Objective2.SetActive(true);
+            Objective3.SetActive(true);
+            Objective4.SetActive(true);
+            ObjectiveToggle = 1;
 
             if (hotbarPanel != null)
                 hotbarPanel.SetActive(false);
@@ -477,6 +493,30 @@ public class Hotbar : MonoBehaviour
             RightClickTxt.text = RightClickTxts[index];
         }
         phase++;
+    }
+
+    public void Objectives()
+    {
+        if (ObjectiveToggle == 0)
+        {
+            ObjectiveToggle = 1;
+            TMP_Text ToggleObjectives = toggleObjectives.GetComponentInChildren<TMP_Text>();
+            ToggleObjectives.text = "Objectives (Shown)";
+            Objective1.SetActive(true);
+            Objective2.SetActive(true);
+            Objective3.SetActive(true);
+            Objective4.SetActive(true);
+        }
+        else if (ObjectiveToggle == 1)
+        {
+            ObjectiveToggle = 0;
+            TMP_Text ToggleObjectives = toggleObjectives.GetComponentInChildren<TMP_Text>();
+            ToggleObjectives.text = "Objectives (Hidden)";
+            Objective1.SetActive(false);
+            Objective2.SetActive(false);
+            Objective3.SetActive(false);
+            Objective4.SetActive(false);
+        }
     }
 
 
