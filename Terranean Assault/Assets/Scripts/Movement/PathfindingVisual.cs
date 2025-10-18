@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -56,7 +56,7 @@ public class PathfindingVisual : MonoBehaviour
 
                 if (pathNode.isWalkable)
                 {
-                    continue;
+                    quadSize = Vector3.zero;
                 }
 
                 MeshUtils.AddToMeshArrays(vertices, uv, triangles, index, grid.GetWorldPosition(x, y) + quadSize * .5f, 0f, quadSize, Vector2.zero, Vector2.zero);

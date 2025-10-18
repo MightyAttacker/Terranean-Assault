@@ -519,7 +519,6 @@ public class Hotbar : MonoBehaviour
         }
     }
 
-
     GameObject FindPrefabByName(string name)
     {
         foreach (var prefab in itemPrefabs)
