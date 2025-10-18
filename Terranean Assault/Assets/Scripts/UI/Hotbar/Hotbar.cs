@@ -78,6 +78,7 @@ public class Hotbar : MonoBehaviour
     public Button toggleModeButton; // Button to switch between placement/movement mode
     public Button toggleObjectives;
     public Button toggleScoreboard;
+    public Button toggleDZ;
     public GameObject PhaseTracker;
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
@@ -92,6 +93,7 @@ public class Hotbar : MonoBehaviour
 
     private int ObjectiveToggle = 1;
     private int ScoreboardToggle = 0;
+    private int DZToggle = 0;
     private int selectedSlot = -1;
     public int phase = 0;
     private int Score = 0;
@@ -686,6 +688,35 @@ public class Hotbar : MonoBehaviour
             ToggleScoreboard.text = "Scoreboard (Hidden)";
             ScoreboardObject.SetActive(false);
         }
+    }
+
+    public void DZ()
+    {
+        if (phase == 0 || phase == 1)
+        {
+            errorDisplay.ShowError("Cannot Toggle Deployment Zones In Deployment Phase");
+        }
+        else
+        {
+            if (DZToggle == 0)
+            {
+                DZToggle = 1;
+                TMP_Text ToggleDZ = toggleDZ.transform.GetChild(0).GetComponent<TMP_Text>();
+                ToggleDZ.text = "Deployment Zones \n(Shown)";
+                AttackerDZ.SetActive(true);
+                DefenderDZ.SetActive(true);
+
+            }
+            else if (DZToggle == 1)
+            {
+                DZToggle = 0;
+                TMP_Text ToggleDZ = toggleDZ.transform.GetChild(0).GetComponent<TMP_Text>();
+                ToggleDZ.text = "Deployment Zones \n(Hidden)";
+                AttackerDZ.SetActive(false);
+                DefenderDZ.SetActive(false);
+            }
+        }
+
     }
 
     GameObject FindPrefabByName(string name)
