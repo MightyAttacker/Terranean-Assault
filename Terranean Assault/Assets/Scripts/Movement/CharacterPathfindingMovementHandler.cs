@@ -17,6 +17,12 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     private Vector3 lastPositionBeforeMove;
     public int LastMovedPhase => lastMovedPhase;
     [SerializeField] private float maxMoveDistance = 6f;
+    [SerializeField] private float objectiveControl = 1;
+
+    public float GetObjectiveControlValue()
+    {
+       return objectiveControl;
+   }
 
     private void Awake()
     {

@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterPathfindingMovementHandler
   maxMoveDistance: 14
+  objectiveControl: 4
 --- !u!61 &287384129842906456
 BoxCollider2D:
   m_ObjectHideFlags: 0
