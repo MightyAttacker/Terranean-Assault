@@ -9,6 +9,7 @@ using Unity.VisualScripting;
 using UnityEditor.ShaderGraph;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using UnityEngine.SceneManagement;
 
 public class Hotbar : MonoBehaviour
 {
@@ -78,8 +79,11 @@ public class Hotbar : MonoBehaviour
     public Button toggleModeButton; // Button to switch between placement/movement mode
     public Button toggleObjectives;
     public Button toggleScoreboard;
+    public Button toggleDZ;
+    public Button Exit;
     public GameObject PhaseTracker;
     public GameObject hotbarPanel;
+    public GameObject Exits;
     public GameObject AttackerDZ;
     public GameObject DefenderDZ;
     public GameObject Objective1;
@@ -87,14 +91,23 @@ public class Hotbar : MonoBehaviour
     public GameObject Objective3;
     public GameObject Objective4;
     public GameObject ScoreboardObject;
+    public GameObject WinBanner;
+    public GameObject EndScreen;
     public GameObject LeftClick;
     public GameObject RightClick;
 
     private int ObjectiveToggle = 1;
     private int ScoreboardToggle = 0;
+    private int DZToggle = 0;
     private int selectedSlot = -1;
     public int phase = 0;
     private int Score = 0;
+    private int TotalScoreAttacker = 0;
+    private int TotalScoreDefender = 0;
+
+    private UIDragHandler dragHandler;
+    private UIResizeHandler resizeHandler;
+    private RectTransform scoreboardRect;
 
     private GameObject currentGhost;
     private Camera mainCam;
@@ -152,6 +165,13 @@ public class Hotbar : MonoBehaviour
         mainCam = Camera.main;
         ScoreboardObject.SetActive(false);
         DefenderDZ.SetActive(false);
+        EndScreen.SetActive(false);
+        WinBanner.SetActive(false);
+        Exits.SetActive(false);
+
+        scoreboardRect = ScoreboardObject.GetComponent<RectTransform>();
+        dragHandler = ScoreboardObject.GetComponent<UIDragHandler>();
+        resizeHandler = ScoreboardObject.GetComponentInChildren<UIResizeHandler>();
 
         attackerScoreTexts = ScoreboardObject.transform.Find("Attacker")
                 .GetComponentsInChildren<TMP_Text>(true);
@@ -546,98 +566,202 @@ public class Hotbar : MonoBehaviour
 
     public void Phases()
     {
-
-        if (!IsHotbarEmpty())
+        if (phase < 24)
         {
-            errorDisplay.ShowError("Please place all units first");
-            return;
-        }
-
-        // Handle special logic for specific phases
-        if (phase == 0)
-        {
-            DefenderDZ.SetActive(true);
-            AttackerDZ.SetActive(false);
-
-            itemPrefabs = new GameObject[Images.Length];
-            itemPrefabs[0] = AssaultLeader;
-            itemPrefabs[1] = AssaultSargent;
-            itemPrefabs[2] = AssaultTransport;
-            itemPrefabs[3] = AssaultTransport;
-            itemPrefabs[4] = AssaultSquad;
-            itemPrefabs[5] = AssaultSquad;
-            itemPrefabs[6] = AssaultSquad;
-            itemPrefabs[7] = AssaultSquad;
-            itemPrefabs[8] = AssaultSquad;
-
-            UpdateHotbarSprites();
-        }
-        else if (phase == 1)
-        {
-            DefenderDZ.SetActive(false);
-
-            if (hotbarPanel != null)
-                hotbarPanel.SetActive(false);
-
-            if (currentGhost != null)
+            if (!IsHotbarEmpty())
             {
-                Destroy(currentGhost);
-                selectedSlot = -1;
-                HighlightSlot(-1);
+                errorDisplay.ShowError("Please place all units first");
+                return;
             }
-        }
-        else if (phase == 5 || phase == 9 || phase == 13 || phase == 17 || phase == 21)
-        {
-            int scoreboardIndex = (phase - 5) / 4; // Maps 5→0, 9→1, 13→2, 17→3, 21→4
-            int Score = 0;
 
-            for (int i = 1; i <= 4; i++)
+            // Handle special logic for specific phases
+            if (phase == 0)
             {
-                if (GetObjectiveOwner(i) == attackerTag)
+                DefenderDZ.SetActive(true);
+                AttackerDZ.SetActive(false);
+
+                itemPrefabs = new GameObject[Images.Length];
+                itemPrefabs[0] = AssaultLeader;
+                itemPrefabs[1] = AssaultSargent;
+                itemPrefabs[2] = AssaultTransport;
+                itemPrefabs[3] = AssaultTransport;
+                itemPrefabs[4] = AssaultSquad;
+                itemPrefabs[5] = AssaultSquad;
+                itemPrefabs[6] = AssaultSquad;
+                itemPrefabs[7] = AssaultSquad;
+                itemPrefabs[8] = AssaultSquad;
+
+                UpdateHotbarSprites();
+            }
+            else if (phase == 1)
+            {
+                DefenderDZ.SetActive(false);
+
+                if (hotbarPanel != null)
+                    hotbarPanel.SetActive(false);
+
+                if (currentGhost != null)
                 {
-                    Score += 5;
+                    Destroy(currentGhost);
+                    selectedSlot = -1;
+                    HighlightSlot(-1);
                 }
             }
-
-            UpdateAttackerScore(scoreboardIndex, Score.ToString());
-        }
-        else if (phase == 7 || phase == 11 || phase == 15 || phase == 19 || phase == 23)
-        {
-            int scoreboardIndex = (phase - 7) / 4; // Maps 5→0, 9→1, 13→2, 17→3, 21→4
-            int Score = 0;
-
-            for (int i = 1; i <= 4; i++)
+            else if (phase == 5 || phase == 9 || phase == 13 || phase == 17)
             {
-                if (GetObjectiveOwner(i) == defenderTag)
+                int scoreboardIndex = (phase - 5) / 4; // Maps 5→0, 9→1, 13→2, 17→3
+                int Score = 0;
+                int Turn = scoreboardIndex + 1;
+
+                for (int i = 1; i <= 4; i++)
                 {
-                    Score += 5;
+                    if (GetObjectiveOwner(i) == attackerTag)
+                    {
+                        Score += 5;
+                        TotalScoreAttacker += 5;
+                    }
                 }
+
+                UpdateAttackerScore(scoreboardIndex, "Round " + Turn + " -\n" + Score.ToString());
+                UpdateAttackerScore(5, "Total -\n" + TotalScoreAttacker.ToString());
+            }
+            else if (phase == 7 || phase == 11 || phase == 15 || phase == 19)
+            {
+                int scoreboardIndex = (phase - 7) / 4; // Maps 5→0, 9→1, 13→2, 17→3
+                int Score = 0;
+                int Turn = scoreboardIndex + 1;
+
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (GetObjectiveOwner(i) == defenderTag)
+                    {
+                        Score += 5;
+                        TotalScoreDefender += 5;
+                    }
+                }
+
+                UpdateDefenderScore(scoreboardIndex, "Round " + Turn + " -\n" + Score.ToString());
+                UpdateDefenderScore(5, "Total -\n" + TotalScoreDefender.ToString());
+            }
+            else if (phase == 21)
+            {
+                int ScoreD = 0;
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (GetObjectiveOwner(i) == defenderTag)
+                    {
+                        ScoreD += 5;
+                        TotalScoreDefender += 5;
+                    }
+                }
+                UpdateDefenderScore(4, "Round 5 -\n" + ScoreD.ToString());
+                UpdateDefenderScore(5, "Total -\n" + TotalScoreDefender.ToString());       
+                
+                int ScoreA = 0;
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (GetObjectiveOwner(i) == attackerTag)
+                    {
+                        ScoreA += 5;
+                        TotalScoreAttacker += 5;
+                    }
+                }
+                UpdateAttackerScore(4, "Round 5 -\n" + ScoreA.ToString());
+                UpdateAttackerScore(5, "Total -\n" + TotalScoreAttacker.ToString());            
             }
 
-            UpdateDefenderScore(scoreboardIndex, Score.ToString());
+            // Set phase text via lookup table
+            TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
+            if (phase >= 0 && phase < phaseTexts.Length)
+                PhaseText.text = phaseTexts[phase];
+
+
+            TMP_Text LeftClickTxt = LeftClick.GetComponentInChildren<TMP_Text>();
+            TMP_Text RightClickTxt = RightClick.GetComponentInChildren<TMP_Text>();
+
+            if (phase == 0)
+            {
+                // Do nothing
+            }
+            else
+            {
+                // phase is even → index 1, odd → index 0
+                int index = (phase % 2 == 0) ? 1 : 0;
+                LeftClickTxt.text = LeftClickTxts[index];
+                RightClickTxt.text = RightClickTxts[index];
+            }
+
+            if (phase == 21)
+            {
+
+                if (TotalScoreAttacker > TotalScoreDefender)
+                {
+                    TMP_Text WinBanners = WinBanner.GetComponentInChildren<TMP_Text>();
+                    WinBanners.text = "Attacker Wins!";
+                    WinBanners.color = Color.red;
+                }
+                else if (TotalScoreDefender > TotalScoreAttacker)
+                {
+                    TMP_Text WinBanners = WinBanner.GetComponentInChildren<TMP_Text>();
+                    WinBanners.text = "Defender Wins!";
+                    WinBanners.color = Color.blue;
+                }
+                else
+                {
+                    TMP_Text WinBanners = WinBanner.GetComponentInChildren<TMP_Text>();
+                    WinBanners.text = "Draw!";
+                    WinBanners.color = Color.gold;
+                }
+
+
+                AttackerDZ.SetActive(false);
+                DefenderDZ.SetActive(false);
+                Objective1.SetActive(false);
+                Objective2.SetActive(false);
+                Objective3.SetActive(false);
+                Objective4.SetActive(false);
+                ScoreboardObject.SetActive(true);
+                EndScreen.SetActive(true);
+                WinBanner.SetActive(true);
+                Exits.SetActive(true);
+
+                if (dragHandler != null) dragHandler.enabled = false;
+                if (resizeHandler != null) resizeHandler.enabled = false;
+
+                StartCoroutine(ExpandScoreboardSmooth());
+
+            }
+
+            phase++;
         }
 
-        // Set phase text via lookup table
-        TMP_Text PhaseText = PhaseTracker.GetComponentInChildren<TMP_Text>();
-        if (phase >= 0 && phase < phaseTexts.Length)
-            PhaseText.text = phaseTexts[phase];
-
-        TMP_Text LeftClickTxt = LeftClick.GetComponentInChildren<TMP_Text>();
-        TMP_Text RightClickTxt = RightClick.GetComponentInChildren<TMP_Text>();
-
-        if (phase == 0)
-        {
-            // Do nothing
-        }
-        else
-        {
-            // phase is even → index 1, odd → index 0
-            int index = (phase % 2 == 0) ? 1 : 0;
-            LeftClickTxt.text = LeftClickTxts[index];
-            RightClickTxt.text = RightClickTxts[index];
-        }
-        phase++;
     }
+
+    IEnumerator ExpandScoreboardSmooth()
+    {
+        Vector2 startMin = scoreboardRect.anchorMin;
+        Vector2 startMax = scoreboardRect.anchorMax;
+        Vector2 targetMin = new Vector2(0.1f, 0.1f);
+        Vector2 targetMax = new Vector2(0.9f, 0.9f);
+
+        float duration = 0.5f;
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+            scoreboardRect.anchorMin = Vector2.Lerp(startMin, targetMin, t);
+            scoreboardRect.anchorMax = Vector2.Lerp(startMax, targetMax, t);
+            yield return null;
+        }
+
+        // Snap exactly at the end
+        scoreboardRect.anchorMin = targetMin;
+        scoreboardRect.anchorMax = targetMax;
+        scoreboardRect.offsetMin = Vector2.zero;
+        scoreboardRect.offsetMax = Vector2.zero;
+    }
+
 
     public void Objectives()
     {
@@ -680,6 +804,40 @@ public class Hotbar : MonoBehaviour
             ToggleScoreboard.text = "Scoreboard (Hidden)";
             ScoreboardObject.SetActive(false);
         }
+    }
+
+    public void DZ()
+    {
+        if (phase == 0 || phase == 1)
+        {
+            errorDisplay.ShowError("Cannot Toggle Deployment Zones In Deployment Phase");
+        }
+        else
+        {
+            if (DZToggle == 0)
+            {
+                DZToggle = 1;
+                TMP_Text ToggleDZ = toggleDZ.transform.GetChild(0).GetComponent<TMP_Text>();
+                ToggleDZ.text = "Deployment Zones \n(Shown)";
+                AttackerDZ.SetActive(true);
+                DefenderDZ.SetActive(true);
+
+            }
+            else if (DZToggle == 1)
+            {
+                DZToggle = 0;
+                TMP_Text ToggleDZ = toggleDZ.transform.GetChild(0).GetComponent<TMP_Text>();
+                ToggleDZ.text = "Deployment Zones \n(Hidden)";
+                AttackerDZ.SetActive(false);
+                DefenderDZ.SetActive(false);
+            }
+        }
+
+    }
+
+    public void ExitPage()
+    {
+        SceneManager.LoadSceneAsync(1);
     }
 
     GameObject FindPrefabByName(string name)
