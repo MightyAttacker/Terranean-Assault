@@ -44,9 +44,15 @@ public class Hotbar : MonoBehaviour
     [Tooltip("All spawned units for movement tracking.")]
     public List<GameObject> spawnedUnits = new List<GameObject>();
 
+
+    [Header("Scoreboard Text References")]
+    public TMP_Text[] attackerScoreTexts;
+    public TMP_Text[] defenderScoreTexts;
+
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
     public Button toggleObjectives;
+    public Button toggleScoreboard;
     public GameObject PhaseTracker;
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
@@ -55,9 +61,11 @@ public class Hotbar : MonoBehaviour
     public GameObject Objective2;
     public GameObject Objective3;
     public GameObject Objective4;
+    public GameObject ScoreboardObject;
     public GameObject LeftClick;
     public GameObject RightClick;
     private int ObjectiveToggle = 0;
+    private int ScoreboardToggle = 0;
     private int selectedSlot = -1;
     private GameObject currentGhost;
     private Camera mainCam;
@@ -114,7 +122,16 @@ public class Hotbar : MonoBehaviour
         Objective2.SetActive(false);
         Objective3.SetActive(false);
         Objective4.SetActive(false);
+        ScoreboardObject.SetActive(false);
 
+        attackerScoreTexts = ScoreboardObject.transform.Find("Attacker")
+                .GetComponentsInChildren<TMP_Text>(true);
+        defenderScoreTexts = ScoreboardObject.transform.Find("Defender")
+            .GetComponentsInChildren<TMP_Text>(true);
+
+        // Only keep the ones named exactly "Txt 1"
+        attackerScoreTexts = System.Array.FindAll(attackerScoreTexts, t => t.name == "Txt 1");
+        defenderScoreTexts = System.Array.FindAll(defenderScoreTexts, t => t.name == "Txt 1");
 
         // Initialize itemPrefabs
         itemPrefabs = new GameObject[Images.Length];
@@ -246,6 +263,19 @@ public class Hotbar : MonoBehaviour
         }
         return true;
     }
+
+    public void UpdateAttackerScore(int index, string value)
+    {
+        if (index >= 0 && index < attackerScoreTexts.Length)
+            attackerScoreTexts[index].text = value;
+    }
+
+    public void UpdateDefenderScore(int index, string value)
+    {
+        if (index >= 0 && index < defenderScoreTexts.Length)
+            defenderScoreTexts[index].text = value;
+    }
+
 
     void SelectSlot(int index)
     {
@@ -516,6 +546,25 @@ public class Hotbar : MonoBehaviour
             Objective2.SetActive(false);
             Objective3.SetActive(false);
             Objective4.SetActive(false);
+        }
+    }
+
+    public void Scoreboard()
+    {
+        if (ScoreboardToggle == 0)
+        {
+            ScoreboardToggle = 1;
+            TMP_Text ToggleScoreboard = toggleScoreboard.transform.GetChild(0).GetComponent<TMP_Text>();
+            ToggleScoreboard.text = "Scoreboard (Shown)";
+            ScoreboardObject.SetActive(true);
+
+        }
+        else if (ScoreboardToggle == 1)
+        {
+            ScoreboardToggle = 0;
+            TMP_Text ToggleScoreboard = toggleScoreboard.transform.GetChild(0).GetComponent<TMP_Text>();
+            ToggleScoreboard.text = "Scoreboard (Hidden)";
+            ScoreboardObject.SetActive(false);
         }
     }
 
