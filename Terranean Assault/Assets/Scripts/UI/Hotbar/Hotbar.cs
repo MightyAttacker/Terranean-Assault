@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using TMPro;
 using System.Collections;
 using Unity.VisualScripting;
+using UnityEditor.ShaderGraph;
+using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 
 public class Hotbar : MonoBehaviour
 {
@@ -32,21 +35,49 @@ public class Hotbar : MonoBehaviour
     public ErrorDisplay errorDisplay;
 
     [Header("Regions")]
+    [Header("Attacker")]
     [Tooltip("Allowed placement area for the attacker (bottom-left to top-right)")]
     public Vector2 attackerRegionMin = new Vector2(-10f, -5f);
     public Vector2 attackerRegionMax = new Vector2(-2f, 5f);
 
+    [Header("Defender")]
     [Tooltip("Allowed placement area for the defender (bottom-left to top-right)")]
     public Vector2 defenderRegionMin = new Vector2(2f, -5f);
     public Vector2 defenderRegionMax = new Vector2(10f, 5f);
+
+    [Header("Objective 1")]
+    [Tooltip("Allowed placement area for the defender (bottom-left to top-right)")]
+    public Vector2 objective1RegionMin = new Vector2(2f, -5f);
+    public Vector2 objective1RegionMax = new Vector2(10f, 5f);
+
+    [Header("Objective 2")]
+    [Tooltip("Allowed placement area for the defender (bottom-left to top-right)")]
+    public Vector2 objective2RegionMin = new Vector2(2f, -5f);
+    public Vector2 objective2RegionMax = new Vector2(10f, 5f);
+
+    [Header("Objective 3")]
+    [Tooltip("Allowed placement area for the defender (bottom-left to top-right)")]
+    public Vector2 objective3RegionMin = new Vector2(2f, -5f);
+    public Vector2 objective3RegionMax = new Vector2(10f, 5f);
+
+    [Header("Objective 4")]
+    [Tooltip("Allowed placement area for the defender (bottom-left to top-right)")]
+    public Vector2 objective4RegionMin = new Vector2(2f, -5f);
+    public Vector2 objective4RegionMax = new Vector2(10f, 5f);
 
     [Header("Tracking Spawned Units")]
     [Tooltip("All spawned units for movement tracking.")]
     public List<GameObject> spawnedUnits = new List<GameObject>();
 
+
+    [Header("Scoreboard Text References")]
+    public TMP_Text[] attackerScoreTexts;
+    public TMP_Text[] defenderScoreTexts;
+
     [Header("UI")]
     public Button toggleModeButton; // Button to switch between placement/movement mode
     public Button toggleObjectives;
+    public Button toggleScoreboard;
     public GameObject PhaseTracker;
     public GameObject hotbarPanel;
     public GameObject AttackerDZ;
@@ -55,12 +86,23 @@ public class Hotbar : MonoBehaviour
     public GameObject Objective2;
     public GameObject Objective3;
     public GameObject Objective4;
+    public GameObject ScoreboardObject;
     public GameObject LeftClick;
     public GameObject RightClick;
-    private int ObjectiveToggle = 0;
+
+    private int ObjectiveToggle = 1;
+    private int ScoreboardToggle = 0;
     private int selectedSlot = -1;
+    public int phase = 0;
+    private int Score = 0;
+
     private GameObject currentGhost;
     private Camera mainCam;
+
+    private Dictionary<string, float> attackerObjectiveScores = new Dictionary<string, float>();
+    private Dictionary<string, float> defenderObjectiveScores = new Dictionary<string, float>();
+    private Dictionary<string, string> objectiveOwners = new Dictionary<string, string>();
+
     private string[] phaseTexts = new string[]
 {
     //"(Defender) \n Deployment Phase", //0
@@ -101,7 +143,6 @@ public class Hotbar : MonoBehaviour
     "Right Click - \nPunch", //3/5/7/9/11/13/15/17/19/21
     };
 
-    public int phase = 0;
     // Predefined units
     public GameObject Blank;
     public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank;
@@ -109,12 +150,17 @@ public class Hotbar : MonoBehaviour
     void Start()
     {
         mainCam = Camera.main;
+        ScoreboardObject.SetActive(false);
         DefenderDZ.SetActive(false);
-        Objective1.SetActive(false);
-        Objective2.SetActive(false);
-        Objective3.SetActive(false);
-        Objective4.SetActive(false);
 
+        attackerScoreTexts = ScoreboardObject.transform.Find("Attacker")
+                .GetComponentsInChildren<TMP_Text>(true);
+        defenderScoreTexts = ScoreboardObject.transform.Find("Defender")
+            .GetComponentsInChildren<TMP_Text>(true);
+
+        // Only keep the ones named exactly "Txt 1"
+        attackerScoreTexts = System.Array.FindAll(attackerScoreTexts, t => t.name == "Txt 1");
+        defenderScoreTexts = System.Array.FindAll(defenderScoreTexts, t => t.name == "Txt 1");
 
         // Initialize itemPrefabs
         itemPrefabs = new GameObject[Images.Length];
@@ -146,6 +192,8 @@ public class Hotbar : MonoBehaviour
     {
         Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
+        CalculateObjectiveControl();
+        UpdateObjectiveColors();
 
         // Number keys select hotbar
         for (int i = 0; i < Images.Length; i++)
@@ -237,6 +285,63 @@ public class Hotbar : MonoBehaviour
         }
     }
 
+    private void SetObjectiveColor(GameObject objectiveParent, Color color)
+    {
+        // Get all SpriteRenderer components in the children
+        SpriteRenderer[] childSprites = objectiveParent.GetComponentsInChildren<SpriteRenderer>();
+
+        foreach (SpriteRenderer sr in childSprites)
+        {
+            sr.color = color;
+        }
+    }
+
+    private void UpdateObjectiveColors()
+    {
+        UpdateSingleObjectiveColor(Objective1, 1);
+        UpdateSingleObjectiveColor(Objective2, 2);
+        UpdateSingleObjectiveColor(Objective3, 3);
+        UpdateSingleObjectiveColor(Objective4, 4);
+    }
+
+    private void UpdateSingleObjectiveColor(GameObject objectiveParent, int objectiveNumber)
+    {
+        string owner = GetObjectiveOwner(objectiveNumber);
+
+        Color parentColor;
+        Color childColor;
+
+        if (owner == attackerTag)
+        {
+            parentColor = new Color(1f, 0f, 0f, 0.02f);   // Red transparent
+            childColor = new Color(1f, 0f, 0f, 1f);       // Red opaque
+        }
+        else if (owner == defenderTag)
+        {
+            parentColor = new Color(0f, 0f, 1f, 0.02f);   // Blue transparent
+            childColor = new Color(0f, 0f, 1f, 1f);       // Blue opaque
+        }
+        else
+        {
+            parentColor = new Color(1f, 0.8f, 0f, 0.02f); // Yellow transparent
+            childColor = new Color(1f, 0.8f, 0f, 1f);    // Yellow opaque
+        }
+
+        // Set the parent objective sprite
+        SpriteRenderer parentSR = objectiveParent.GetComponent<SpriteRenderer>();
+        if (parentSR != null && parentSR.color != parentColor)
+            parentSR.color = parentColor;
+
+        // Set all child sprites
+        SpriteRenderer[] childSprites = objectiveParent.GetComponentsInChildren<SpriteRenderer>();
+        foreach (SpriteRenderer sr in childSprites)
+        {
+            if (sr.gameObject != objectiveParent && sr.color != childColor)
+                sr.color = childColor;
+        }
+    }
+
+
     bool IsHotbarEmpty()
     {
         foreach (var prefab in itemPrefabs)
@@ -246,6 +351,19 @@ public class Hotbar : MonoBehaviour
         }
         return true;
     }
+
+    public void UpdateAttackerScore(int index, string value)
+    {
+        if (index >= 0 && index < attackerScoreTexts.Length)
+            attackerScoreTexts[index].text = value;
+    }
+
+    public void UpdateDefenderScore(int index, string value)
+    {
+        if (index >= 0 && index < defenderScoreTexts.Length)
+            defenderScoreTexts[index].text = value;
+    }
+
 
     void SelectSlot(int index)
     {
@@ -353,7 +471,7 @@ public class Hotbar : MonoBehaviour
 
         // Clear hotbar slot
         Images[selectedSlot].sprite = null;
-        Images[selectedSlot].color = new Color(1, 1, 1, 0f);
+        Images[selectedSlot].color = new Color(0, 0, 0, 0f);
         itemPrefabs[selectedSlot] = null;
 
         // Destroy ghost & deselect
@@ -421,13 +539,14 @@ public class Hotbar : MonoBehaviour
             else
             {
                 Images[i].sprite = null;
-                Images[i].color = new Color(1, 1, 1, 0.25f);
+                Images[i].color = new Color(0, 0, 0, 0f);
             }
         }
     }
 
     public void Phases()
     {
+
         if (!IsHotbarEmpty())
         {
             errorDisplay.ShowError("Please place all units first");
@@ -456,11 +575,6 @@ public class Hotbar : MonoBehaviour
         else if (phase == 1)
         {
             DefenderDZ.SetActive(false);
-            Objective1.SetActive(true);
-            Objective2.SetActive(true);
-            Objective3.SetActive(true);
-            Objective4.SetActive(true);
-            ObjectiveToggle = 1;
 
             if (hotbarPanel != null)
                 hotbarPanel.SetActive(false);
@@ -471,6 +585,36 @@ public class Hotbar : MonoBehaviour
                 selectedSlot = -1;
                 HighlightSlot(-1);
             }
+        }
+        else if (phase == 5 || phase == 9 || phase == 13 || phase == 17 || phase == 21)
+        {
+            int scoreboardIndex = (phase - 5) / 4; // Maps 5→0, 9→1, 13→2, 17→3, 21→4
+            int Score = 0;
+
+            for (int i = 1; i <= 4; i++)
+            {
+                if (GetObjectiveOwner(i) == attackerTag)
+                {
+                    Score += 5;
+                }
+            }
+
+            UpdateAttackerScore(scoreboardIndex, Score.ToString());
+        }
+        else if (phase == 7 || phase == 11 || phase == 15 || phase == 19 || phase == 23)
+        {
+            int scoreboardIndex = (phase - 7) / 4; // Maps 5→0, 9→1, 13→2, 17→3, 21→4
+            int Score = 0;
+
+            for (int i = 1; i <= 4; i++)
+            {
+                if (GetObjectiveOwner(i) == defenderTag)
+                {
+                    Score += 5;
+                }
+            }
+
+            UpdateDefenderScore(scoreboardIndex, Score.ToString());
         }
 
         // Set phase text via lookup table
@@ -519,6 +663,24 @@ public class Hotbar : MonoBehaviour
         }
     }
 
+    public void Scoreboard()
+    {
+        if (ScoreboardToggle == 0)
+        {
+            ScoreboardToggle = 1;
+            TMP_Text ToggleScoreboard = toggleScoreboard.transform.GetChild(0).GetComponent<TMP_Text>();
+            ToggleScoreboard.text = "Scoreboard (Shown)";
+            ScoreboardObject.SetActive(true);
+
+        }
+        else if (ScoreboardToggle == 1)
+        {
+            ScoreboardToggle = 0;
+            TMP_Text ToggleScoreboard = toggleScoreboard.transform.GetChild(0).GetComponent<TMP_Text>();
+            ToggleScoreboard.text = "Scoreboard (Hidden)";
+            ScoreboardObject.SetActive(false);
+        }
+    }
 
     GameObject FindPrefabByName(string name)
     {
@@ -533,4 +695,91 @@ public class Hotbar : MonoBehaviour
 
         return null;
     }
+
+    public void CalculateObjectiveControl()
+    {
+        attackerObjectiveScores.Clear();
+        defenderObjectiveScores.Clear();
+        objectiveOwners.Clear();
+
+        for (int i = 1; i <= 4; i++)
+        {
+            attackerObjectiveScores["Objective" + i] = 0f;
+            defenderObjectiveScores["Objective" + i] = 0f;
+        }
+
+        foreach (GameObject unit in spawnedUnits)
+        {
+            if (unit == null) continue;
+
+            CharacterPathfindingMovementHandler handler = unit.GetComponent<CharacterPathfindingMovementHandler>();
+            if (handler == null) continue;
+
+            float value = handler.GetObjectiveControlValue();
+            string tag = unit.tag;
+            Vector3 pos = unit.transform.position;
+
+            if (IsWithinRegion(pos, objective1RegionMin, objective1RegionMax))
+                AddToTeamControl(tag, "Objective1", value, attackerObjectiveScores, defenderObjectiveScores);
+            if (IsWithinRegion(pos, objective2RegionMin, objective2RegionMax))
+                AddToTeamControl(tag, "Objective2", value, attackerObjectiveScores, defenderObjectiveScores);
+            if (IsWithinRegion(pos, objective3RegionMin, objective3RegionMax))
+                AddToTeamControl(tag, "Objective3", value, attackerObjectiveScores, defenderObjectiveScores);
+            if (IsWithinRegion(pos, objective4RegionMin, objective4RegionMax))
+                AddToTeamControl(tag, "Objective4", value, attackerObjectiveScores, defenderObjectiveScores);
+        }
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string key = "Objective" + i;
+            float atk = attackerObjectiveScores[key];
+            float def = defenderObjectiveScores[key];
+
+            string owner = (atk > def) ? attackerTag :
+                           (def > atk) ? defenderTag :
+                           "Contested";
+
+            objectiveOwners[key] = owner;
+
+            Debug.Log($"{key}: {attackerTag} = {atk}, {defenderTag} = {def} → {owner}");
+        }
+        UpdateObjectiveColors();
+    }
+
+
+    // Helper: checks if a position is inside a rectangular region
+    private bool IsWithinRegion(Vector3 pos, Vector2 min, Vector2 max)
+    {
+        return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y;
+    }
+
+    // Helper: adds control values to the right team
+    private void AddToTeamControl(string tag, string objectiveKey, float value,
+                                  Dictionary<string, float> atkDict,
+                                  Dictionary<string, float> defDict)
+    {
+        if (tag == attackerTag)
+            atkDict[objectiveKey] += value;
+        else if (tag == defenderTag)
+            defDict[objectiveKey] += value;
+    }
+
+    public float GetAttackerObjectiveScore(int objectiveNumber)
+    {
+        string key = "Objective" + objectiveNumber;
+        return attackerObjectiveScores.ContainsKey(key) ? attackerObjectiveScores[key] : 0f;
+    }
+
+    public float GetDefenderObjectiveScore(int objectiveNumber)
+    {
+        string key = "Objective" + objectiveNumber;
+        return defenderObjectiveScores.ContainsKey(key) ? defenderObjectiveScores[key] : 0f;
+    }
+
+    public string GetObjectiveOwner(int objectiveNumber)
+    {
+        string key = "Objective" + objectiveNumber;
+        return objectiveOwners.ContainsKey(key) ? objectiveOwners[key] : "Unknown";
+    }
+
 }
