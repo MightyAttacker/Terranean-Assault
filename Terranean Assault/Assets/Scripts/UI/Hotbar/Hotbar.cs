@@ -95,6 +95,8 @@ public class Hotbar : MonoBehaviour
     private int selectedSlot = -1;
     public int phase = 0;
     private int Score = 0;
+    private int TotalScoreAttacker = 0;
+    private int TotalScoreDefender = 0;
 
     private GameObject currentGhost;
     private Camera mainCam;
@@ -596,10 +598,12 @@ public class Hotbar : MonoBehaviour
                 if (GetObjectiveOwner(i) == attackerTag)
                 {
                     Score += 5;
+                    TotalScoreAttacker += 5;
                 }
             }
 
             UpdateAttackerScore(scoreboardIndex, Score.ToString());
+            UpdateAttackerScore(5, TotalScoreAttacker.ToString());
         }
         else if (phase == 7 || phase == 11 || phase == 15 || phase == 19 || phase == 23)
         {
@@ -611,10 +615,12 @@ public class Hotbar : MonoBehaviour
                 if (GetObjectiveOwner(i) == defenderTag)
                 {
                     Score += 5;
+                    TotalScoreDefender += 5;
                 }
             }
 
             UpdateDefenderScore(scoreboardIndex, Score.ToString());
+            UpdateDefenderScore(5, TotalScoreDefender.ToString());
         }
 
         // Set phase text via lookup table
