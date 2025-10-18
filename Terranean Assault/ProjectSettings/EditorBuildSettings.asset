@@ -15,25 +15,10 @@ EditorBuildSettings:
     path: Assets/Scenes/Menu/Options Menu.unity
     guid: d049fb60eb19f4b27a0937d443febdfb
   - enabled: 1
+    path: Assets/Scenes/Menu/Map select.unity
+    guid: ad2caced1e5c95548aa1924bb08552c7
+  - enabled: 1
     path: Assets/Scenes/Maps/Map 1.unity
     guid: ffcb92f9de0a4664aa2a36880ffffefd
-  - enabled: 1
-    path: Assets/Scenes/Maps/Map 2.unity
-    guid: 3a4082b93764a6c4da86a89ae571c12e
-  - enabled: 1
-    path: Assets/Scenes/Maps/Map 3.unity
-    guid: 6c61b4b38b28c3c4785fbcd73a261b25
-  - enabled: 1
-    path: Assets/Scenes/Maps/Map 4.unity
-    guid: 5473187d03fd28b489d3e4c2ad786520
-  - enabled: 1
-    path: Assets/Scenes/Maps/Map 5.unity
-    guid: c0df28c5cc08f564db6e9481c2a138c0
-  - enabled: 1
-    path: Assets/Scenes/Maps/Map 6.unity
-    guid: 22f10c223d74168468b9179902a64c5b
-  - enabled: 1
-    path: Assets/Scenes/Map select.unity
-    guid: ad2caced1e5c95548aa1924bb08552c7
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

@@ -88,6 +88,7 @@ public class Hotbar : MonoBehaviour
     public GameObject Objective3;
     public GameObject Objective4;
     public GameObject ScoreboardObject;
+    public GameObject EndScreen;
     public GameObject LeftClick;
     public GameObject RightClick;
 
@@ -156,6 +157,7 @@ public class Hotbar : MonoBehaviour
         mainCam = Camera.main;
         ScoreboardObject.SetActive(false);
         DefenderDZ.SetActive(false);
+        EndScreen.SetActive(false);
 
         attackerScoreTexts = ScoreboardObject.transform.Find("Attacker")
                 .GetComponentsInChildren<TMP_Text>(true);
@@ -594,6 +596,7 @@ public class Hotbar : MonoBehaviour
         {
             int scoreboardIndex = (phase - 5) / 4; // Maps 5→0, 9→1, 13→2, 17→3, 21→4
             int Score = 0;
+            int Turn = scoreboardIndex + 1;
 
             for (int i = 1; i <= 4; i++)
             {
@@ -604,13 +607,14 @@ public class Hotbar : MonoBehaviour
                 }
             }
 
-            UpdateAttackerScore(scoreboardIndex, Score.ToString());
-            UpdateAttackerScore(5, TotalScoreAttacker.ToString());
+            UpdateAttackerScore(scoreboardIndex, "Round " + Turn + " -\n" + Score.ToString());
+            UpdateAttackerScore(5, "Total -\n" + TotalScoreAttacker.ToString());
         }
         else if (phase == 7 || phase == 11 || phase == 15 || phase == 19 || phase == 23)
         {
             int scoreboardIndex = (phase - 7) / 4; // Maps 5→0, 9→1, 13→2, 17→3, 21→4
             int Score = 0;
+            int Turn = scoreboardIndex + 1;
 
             for (int i = 1; i <= 4; i++)
             {
@@ -620,9 +624,9 @@ public class Hotbar : MonoBehaviour
                     TotalScoreDefender += 5;
                 }
             }
-
-            UpdateDefenderScore(scoreboardIndex, Score.ToString());
-            UpdateDefenderScore(5, TotalScoreDefender.ToString());
+            
+            UpdateDefenderScore(scoreboardIndex, "Round " + Turn + " -\n" + Score.ToString());
+            UpdateDefenderScore(5, "Total -\n" + TotalScoreDefender.ToString());
         }
 
         // Set phase text via lookup table
@@ -644,6 +648,21 @@ public class Hotbar : MonoBehaviour
             LeftClickTxt.text = LeftClickTxts[index];
             RightClickTxt.text = RightClickTxts[index];
         }
+
+        if (phase == 23)
+        {
+            AttackerDZ.SetActive(false);
+            DefenderDZ.SetActive(false);
+            Objective1.SetActive(false);
+            Objective2.SetActive(false);
+            Objective3.SetActive(false);
+            Objective4.SetActive(false);
+            ScoreboardObject.SetActive(false);
+            EndScreen.SetActive(true);
+
+        }
+
+
         phase++;
     }
 
