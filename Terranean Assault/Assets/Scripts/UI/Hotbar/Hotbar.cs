@@ -13,6 +13,7 @@ using UnityEngine.SceneManagement;
 
 public class Hotbar : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     [Header("Images")]
     public Image[] Images;
 
@@ -158,8 +159,8 @@ public class Hotbar : MonoBehaviour
 
     // Predefined units
     public GameObject Blank;
-    public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank;
-    public GameObject AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport;
+    public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank, ATV;
+    public GameObject AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport, ReconTeam, JumpPackBattlesuit, HeavyBattlesuit, EliteBattlesuit;
     void Start()
     {
         mainCam = Camera.main;
@@ -191,7 +192,7 @@ public class Hotbar : MonoBehaviour
         itemPrefabs[4] = Sniper;
         itemPrefabs[5] = Soldier;
         itemPrefabs[6] = Tank;
-        itemPrefabs[7] = Tank;
+        itemPrefabs[7] = ATV;
         itemPrefabs[8] = Blank;
 
         UpdateHotbarSprites();
@@ -226,7 +227,16 @@ public class Hotbar : MonoBehaviour
             // Snap to grid center
             mouseWorld.x = Mathf.Floor(mouseWorld.x) + 0.5f;
             mouseWorld.y = Mathf.Floor(mouseWorld.y) + 0.5f;
-            currentGhost.transform.position = mouseWorld;
+
+            Vector3 ghostPos = mouseWorld;
+            CharacterPathfindingMovementHandler footprint = currentGhost.GetComponent<CharacterPathfindingMovementHandler>();
+            if (footprint != null)
+            {
+                ghostPos.x += (footprint.width - 1) / 2f;
+                ghostPos.y += (footprint.height - 1) / 2f;
+            }
+
+            currentGhost.transform.position = ghostPos;
 
             // Check for wall tile
             bool overWall = false;
@@ -236,7 +246,28 @@ public class Hotbar : MonoBehaviour
                 overWall = WallTilemap.GetTile(cellPos) != null;
             }
 
-            // === Region + wall feedback ===
+            // Check for overlapping units
+            bool overUnit = false;
+            if (footprint != null)
+            {
+                for (int dx = 0; dx < footprint.width; dx++)
+                {
+                    for (int dy = 0; dy < footprint.height; dy++)
+                    {
+                        Vector2 checkPos = new Vector2(mouseWorld.x - (footprint.width - 1) / 2f + dx,
+                                                       mouseWorld.y - (footprint.height - 1) / 2f + dy);
+                        Collider2D hit = Physics2D.OverlapCircle(checkPos, 0.4f);
+                        if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+                        {
+                            overUnit = true;
+                            break;
+                        }
+                    }
+                    if (overUnit) break;
+                }
+            }
+
+            // === Region + wall + unit feedback ===
             bool inValidRegion = true;
 
             if (phase == 0)
@@ -252,14 +283,55 @@ public class Hotbar : MonoBehaviour
                     mouseWorld.y >= defenderRegionMin.y && mouseWorld.y <= defenderRegionMax.y;
             }
 
-            // Combined condition: red if over wall OR outside region
-            bool invalidPlacement = overWall || !inValidRegion;
+            // --- Full footprint invalid check ---
+            bool invalidPlacement = false;
+            if (footprint != null)
+            {
+                for (int dx = 0; dx < footprint.width; dx++)
+                {
+                    for (int dy = 0; dy < footprint.height; dy++)
+                    {
+                        Vector2 checkPos = new Vector2(
+                            mouseWorld.x - (footprint.width - 1) / 2f + dx,
+                            mouseWorld.y - (footprint.height - 1) / 2f + dy
+                        );
 
+                        // Wall check
+                        if (WallTilemap != null)
+                        {
+                            Vector3Int cellPos = WallTilemap.WorldToCell(checkPos);
+                            if (WallTilemap.GetTile(cellPos) != null)
+                                invalidPlacement = true;
+                        }
+
+                        // Unit check (precise point check)
+                        Collider2D hit = Physics2D.OverlapPoint(checkPos);
+                        if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+                            invalidPlacement = true;
+
+                        // Region check
+                        bool inRegion = true;
+                        if (phase == 0)
+                        {
+                            inRegion = checkPos.x >= attackerRegionMin.x && checkPos.x <= attackerRegionMax.x &&
+                                       checkPos.y >= attackerRegionMin.y && checkPos.y <= attackerRegionMax.y;
+                        }
+                        else if (phase == 1)
+                        {
+                            inRegion = checkPos.x >= defenderRegionMin.x && checkPos.x <= defenderRegionMax.x &&
+                                       checkPos.y >= defenderRegionMin.y && checkPos.y <= defenderRegionMax.y;
+                        }
+                        if (!inRegion) invalidPlacement = true;
+                    }
+                }
+            }
+
+            // Update ghost color
             SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
             foreach (var r in renderers)
             {
                 Color c = invalidPlacement ? Color.red : Color.white;
-                c.a = 0.5f;
+                c.a = 0.7f;
                 r.color = c;
             }
 
@@ -420,68 +492,119 @@ public class Hotbar : MonoBehaviour
             slots[i].color = (i == index) ? Color.cyan : Color.white;
     }
 
+    private bool CanPlaceUnit(GameObject prefab, Vector3 position)
+    {
+        CharacterPathfindingMovementHandler footprint = prefab.GetComponent<CharacterPathfindingMovementHandler>();
+        if (footprint == null) footprint = prefab.AddComponent<CharacterPathfindingMovementHandler>(); // default to 1x1 if missing
+
+        for (int x = 0; x < footprint.width; x++)
+        {
+            for (int y = 0; y < footprint.height; y++)
+            {
+                Vector3 cellPos = new Vector3(
+                    Mathf.Floor(position.x) + 0.5f + x,
+                    Mathf.Floor(position.y) + 0.5f + y,
+                    0f
+                );
+
+                // Check if tile is a wall
+                if (WallTilemap != null)
+                {
+                    Vector3Int tile = WallTilemap.WorldToCell(cellPos);
+                    if (WallTilemap.GetTile(tile) != null)
+                        return false; // blocked by wall
+                }
+
+                // Check for overlapping units
+                Collider2D hit = Physics2D.OverlapCircle(cellPos, 0.4f);
+                if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+                    return false; // occupied by unit
+            }
+        }
+
+        return true;
+    }
+
+
     void PlaceItem(Vector3 position)
     {
         if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
             return;
 
-        // --- Check for wall tile ---
-        if (WallTilemap != null)
+        GameObject prefab = itemPrefabs[selectedSlot];
+        CharacterPathfindingMovementHandler footprint = prefab.GetComponent<CharacterPathfindingMovementHandler>();
+        int width = footprint != null ? footprint.width : 1;
+        int height = footprint != null ? footprint.height : 1;
+
+        int baseX = Mathf.FloorToInt(position.x);
+        int baseY = Mathf.FloorToInt(position.y);
+
+        // --- Check each tile of the footprint ---
+        for (int dx = 0; dx < width; dx++)
         {
-            Vector3Int cellPos = WallTilemap.WorldToCell(position);
-            TileBase tile = WallTilemap.GetTile(cellPos);
-            if (tile != null)
+            for (int dy = 0; dy < height; dy++)
             {
-                errorDisplay.ShowError("Cannot place unit here — wall in the way!");
-                return;
+                Vector3 checkPos = new Vector3(baseX + dx + 0.5f, baseY + dy + 0.5f, 0f);
+
+                // 1️⃣ Wall check
+                if (WallTilemap != null)
+                {
+                    Vector3Int cellPos = WallTilemap.WorldToCell(checkPos);
+                    TileBase tile = WallTilemap.GetTile(cellPos);
+                    if (tile != null)
+                    {
+                        errorDisplay.ShowError("Cannot place unit here — wall in the way!");
+                        return;
+                    }
+                }
+
+                // 2️⃣ Region check
+                bool inValidRegion = true;
+                if (phase == 0) // Attacker placement
+                {
+                    inValidRegion =
+                        checkPos.x >= attackerRegionMin.x && checkPos.x <= attackerRegionMax.x &&
+                        checkPos.y >= attackerRegionMin.y && checkPos.y <= attackerRegionMax.y;
+                    if (!inValidRegion)
+                    {
+                        errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
+                        return;
+                    }
+                }
+                else if (phase == 1) // Defender placement
+                {
+                    inValidRegion =
+                        checkPos.x >= defenderRegionMin.x && checkPos.x <= defenderRegionMax.x &&
+                        checkPos.y >= defenderRegionMin.y && checkPos.y <= defenderRegionMax.y;
+                    if (!inValidRegion)
+                    {
+                        errorDisplay.ShowError("Cannot place unit here — outside defender region!");
+                        return;
+                    }
+                }
+
+                // 3️⃣ Check for overlapping units
+                Collider2D hit = Physics2D.OverlapCircle(checkPos, 0.4f);
+                if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+                {
+                    errorDisplay.ShowError("Cannot place unit here — space is blocked!");
+                    return;
+                }
             }
-        }
-
-        // --- Check region by phase ---
-        bool inValidRegion = true;
-
-        if (phase == 0) // Attacker placement
-        {
-            inValidRegion =
-                position.x >= attackerRegionMin.x && position.x <= attackerRegionMax.x &&
-                position.y >= attackerRegionMin.y && position.y <= attackerRegionMax.y;
-
-            if (!inValidRegion)
-            {
-                errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
-                return;
-            }
-        }
-        else if (phase == 1) // Defender placement
-        {
-            inValidRegion =
-                position.x >= defenderRegionMin.x && position.x <= defenderRegionMax.x &&
-                position.y >= defenderRegionMin.y && position.y <= defenderRegionMax.y;
-
-            if (!inValidRegion)
-            {
-                errorDisplay.ShowError("Cannot place unit here — outside defender region!");
-                return;
-            }
-        }
-
-        // --- Check for overlapping unit ---
-        Collider2D hit = Physics2D.OverlapCircle(position, 0.4f);
-        if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
-        {
-            errorDisplay.ShowError("Cannot place unit here — another unit is in the way!");
-            return;
         }
 
         // --- Instantiate unit ---
-        GameObject prefab = itemPrefabs[selectedSlot];
-        GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
+        Vector3 spawnPos = position;
+        if (footprint != null)
+        {
+            spawnPos.x += (footprint.width - 1) / 2f;
+            spawnPos.y += (footprint.height - 1) / 2f;
+        }
+
+        GameObject newUnit = Instantiate(prefab, spawnPos, Quaternion.identity);
 
         // Assign team tag
-        if (phase == 0)
-            newUnit.tag = attackerTag;
-        else if (phase == 1)
-            newUnit.tag = defenderTag;
+        newUnit.tag = phase == 0 ? attackerTag : defenderTag;
 
         // Attach identity for recovery later
         UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
@@ -498,6 +621,7 @@ public class Hotbar : MonoBehaviour
         Destroy(currentGhost);
         DeselectSlot();
     }
+
 
 
     void AddToHotbar(GameObject obj)
@@ -534,7 +658,7 @@ public class Hotbar : MonoBehaviour
         foreach (var r in renderers)
         {
             Color c = r.color;
-            c.a = 0.5f;
+            c.a = 0.7f;
             r.color = c;
         }
 
@@ -585,10 +709,10 @@ public class Hotbar : MonoBehaviour
                 itemPrefabs[1] = AssaultSargent;
                 itemPrefabs[2] = AssaultTransport;
                 itemPrefabs[3] = AssaultTransport;
-                itemPrefabs[4] = AssaultSquad;
-                itemPrefabs[5] = AssaultSquad;
-                itemPrefabs[6] = AssaultSquad;
-                itemPrefabs[7] = AssaultSquad;
+                itemPrefabs[4] = EliteBattlesuit;
+                itemPrefabs[5] = HeavyBattlesuit;
+                itemPrefabs[6] = JumpPackBattlesuit;
+                itemPrefabs[7] = ReconTeam;
                 itemPrefabs[8] = AssaultSquad;
 
                 UpdateHotbarSprites();
@@ -845,8 +969,8 @@ public class Hotbar : MonoBehaviour
         foreach (var prefab in itemPrefabs)
             if (prefab != null && prefab.name == name) return prefab;
 
-        GameObject[] allUnits = { Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank,
-                                 AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport };
+        GameObject[] allUnits = { Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank, ATV,
+                                 AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport, HeavyBattlesuit, EliteBattlesuit, JumpPackBattlesuit, ReconTeam};
 
         foreach (var unit in allUnits)
             if (unit != null && unit.name == name) return unit;

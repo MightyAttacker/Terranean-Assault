@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PathfindingVisual : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     private Grid<PathNode> grid;
     private Mesh mesh;
     private bool updateMesh;
@@ -91,9 +92,9 @@ public class PathfindingVisual : MonoBehaviour
         highlight.transform.position = position;
         var sr = highlight.AddComponent<SpriteRenderer>();
         sr.sprite = highlightSprite;
-        sr.color = new Color(color.r, color.g, color.b, 0.5f);
+        sr.color = new Color(color.r, color.g, color.b, 0.1f);
         sr.sortingLayerName = "Default";
-        sr.sortingOrder = 100;
+        sr.sortingOrder = 10;
 
         highlightTiles.Add(highlight); // Add to list
     }

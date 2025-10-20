@@ -5,6 +5,7 @@ using CodeMonkey.Utils;
 [RequireComponent(typeof(Rigidbody2D))]
 public class CharacterPathfindingMovementHandler : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     public event System.Action OnMovementStarted;
     public event System.Action OnMovementStopped;
 
@@ -21,11 +22,13 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     [SerializeField] private float health = 2;
     [SerializeField] private float meleeDamage = 2;
     [SerializeField] private float rangedDamage = 1;
+    public int width = 1;
+    public int height = 1;
 
     public float GetObjectiveControlValue()
     {
-       return objectiveControl;
-   }
+        return objectiveControl;
+    }
 
     private void Awake()
     {
@@ -101,15 +104,34 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     public void SetTargetPosition(Vector3 targetPosition)
     {
         currentPathIndex = 0;
-        pathVectorList = Pathfinding.Instance.FindPath(GetPosition(), targetPosition);
+
+        // Compute bottom-left of footprint
+        float halfWidthOffset = (width - 1) * 0.5f;
+        float halfHeightOffset = (height - 1) * 0.5f;
+
+        // Adjust targetPosition to bottom-left before sending to pathfinding
+        Vector3 pathfindingTarget = new Vector3(
+            targetPosition.x - halfWidthOffset,
+            targetPosition.y - halfHeightOffset,
+            targetPosition.z
+        );
+
+        // Find path using the adjusted target
+        pathVectorList = Pathfinding.Instance.FindPath(GetPosition(), pathfindingTarget);
 
         if (pathVectorList != null && pathVectorList.Count > 1)
             pathVectorList.RemoveAt(0);
+
+        // Apply footprint offset to each step in the path
+        if (pathVectorList != null)
+        {
+            for (int i = 0; i < pathVectorList.Count; i++)
+            {
+                pathVectorList[i] += new Vector3(halfWidthOffset, halfHeightOffset, 0f);
+            }
+        }
     }
 
-    /// <summary>
-    /// Attempt to move the unit for the current phase. Returns true if move starts.
-    /// </summary>
     public bool TryMove(Vector3 targetPosition, int currentPhase)
     {
         if (lastMovedPhase == currentPhase)
