@@ -234,85 +234,98 @@ public class Testing : MonoBehaviour
         return clickedChar != null && characters.Contains(clickedChar);
     }
 
-    private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
+private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
+{
+    if (selectedCharacter == null) return;
+
+    var grid = pathfinding.GetGrid();
+    grid.GetXY(mouseWorldPosition, out int x, out int y);
+
+    // --- Footprint info ---
+    int footprintWidth = selectedCharacter.width;
+    int footprintHeight = selectedCharacter.height;
+
+    // Snap mouse click to bottom-left of footprint
+    int baseX = x;
+    int baseY = y;
+
+    // Check if all cells the unit would occupy are valid (in bounds, not walls, not occupied)
+    for (int dx = 0; dx < footprintWidth; dx++)
     {
-        if (selectedCharacter == null) return;
-
-        var grid = pathfinding.GetGrid();
-        grid.GetXY(mouseWorldPosition, out int x, out int y);
-        if (!IsWithinGridBounds(x, y)) return;
-
-        Vector3 charWorldPos = selectedCharacter.transform.position;
-        grid.GetXY(charWorldPos, out int startX, out int startY);
-
-        List<PathNode> path = pathfinding.FindPath(startX, startY, x, y);
-        if (path == null) return;
-
-        int totalCost = 0;
-        for (int i = 0; i < path.Count - 1; i++)
+        for (int dy = 0; dy < footprintHeight; dy++)
         {
-            PathNode from = path[i];
-            PathNode to = path[i + 1];
-            totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14;
-        }
+            int checkX = baseX + dx;
+            int checkY = baseY + dy;
 
-        int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / grid.GetCellSize()) * 10;
-        if (totalCost > maxMoveCost)
-        {
-            errorDisplay.ShowError("Destination too far based on movement cost");
-            return;
-        }
-
-        pathfindingVisual.ClearHighlights();
-
-        // --- Footprint info ---
-        int footprintWidth = selectedCharacter.width;
-        int footprintHeight = selectedCharacter.height;
-
-        // Snap mouse click to bottom-left of footprint
-        int baseX = x;
-        int baseY = y;
-
-        // Check if all cells the unit would occupy are free
-        for (int dx = 0; dx < footprintWidth; dx++)
-        {
-            for (int dy = 0; dy < footprintHeight; dy++)
+            // 1️⃣ Out of bounds
+            if (!IsWithinGridBounds(checkX, checkY))
             {
-                Vector3 cellPos = new Vector3(
-                    baseX + dx + 0.5f,
-                    baseY + dy + 0.5f,
-                    0f
-                );
-
-                Collider2D hit = Physics2D.OverlapCircle(cellPos, 0.4f);
-                if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
-                {
-                    errorDisplay.ShowError("Cannot move unit here — another unit is already occupying this space!");
-                    return;
-                }
+                errorDisplay.ShowError("Cannot move unit here — destination is out of bounds!");
+                return;
             }
-        }
-        Debug.Log($"SelectedCharacter: {selectedCharacter.name}, Width: {selectedCharacter.width}, Height: {selectedCharacter.height}");
 
-        // Calculate center position of the footprint
-        Vector3 targetPosition = new Vector3(
-        baseX + (footprintWidth * 0.5f),
-        baseY + (footprintHeight * 0.5f)
-    );
+            // 2️⃣ Wall
+            Vector3 cellWorldPos = new Vector3(checkX + 0.5f, checkY + 0.5f, 0f);
+            Vector3Int wallCell = wallTilemap.WorldToCell(cellWorldPos);
+            if (wallTilemap.GetTile(wallCell) != null)
+            {
+                errorDisplay.ShowError("Cannot move unit here — a wall is blocking this space!");
+                return;
+            }
 
-        // Move unit if valid
-        if (selectedCharacter.TryMove(targetPosition, hotbar.phase))
-        {
-            selectedCharacter = null;
-        }
-        if (movementGhost != null)
-        {
-            Destroy(movementGhost);
-            movementGhost = null;
+            // 3️⃣ Other units
+            Collider2D hit = Physics2D.OverlapCircle(cellWorldPos, 0.4f);
+            if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
+            {
+                errorDisplay.ShowError("Cannot move unit here — another unit is occupying this space!");
+                return;
+            }
         }
     }
 
+    Vector3 charWorldPos = selectedCharacter.transform.position;
+    grid.GetXY(charWorldPos, out int startX, out int startY);
 
+    List<PathNode> path = pathfinding.FindPath(startX, startY, baseX, baseY);
+    if (path == null) return;
+
+    int totalCost = 0;
+    for (int i = 0; i < path.Count - 1; i++)
+    {
+        PathNode from = path[i];
+        PathNode to = path[i + 1];
+        totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14;
+    }
+
+    int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / grid.GetCellSize()) * 10;
+    if (totalCost > maxMoveCost)
+    {
+        errorDisplay.ShowError("Destination too far based on movement cost");
+        return;
+    }
+
+    pathfindingVisual.ClearHighlights();
+
+    // Calculate center position of the footprint
+    Vector3 targetPosition = new Vector3(
+        baseX + (footprintWidth * 0.5f),
+        baseY + (footprintHeight * 0.5f),
+        0f
+    );
+
+    // Move unit if valid
+    if (selectedCharacter.TryMove(targetPosition, hotbar.phase))
+    {
+        selectedCharacter = null;
+    }
+
+    // Destroy movement ghost
+    if (movementGhost != null)
+    {
+        Destroy(movementGhost);
+        movementGhost = null;
+    }
+}
 
     private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
     {

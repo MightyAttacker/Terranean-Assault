@@ -487,93 +487,101 @@ public class Hotbar : MonoBehaviour
 
 
     void PlaceItem(Vector3 position)
+{
+    if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
+        return;
+
+    GameObject prefab = itemPrefabs[selectedSlot];
+    CharacterPathfindingMovementHandler footprint = prefab.GetComponent<CharacterPathfindingMovementHandler>();
+    int width = footprint != null ? footprint.width : 1;
+    int height = footprint != null ? footprint.height : 1;
+
+    int baseX = Mathf.FloorToInt(position.x);
+    int baseY = Mathf.FloorToInt(position.y);
+
+    // --- Check each tile of the footprint ---
+    for (int dx = 0; dx < width; dx++)
     {
-        if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
-            return;
-
-        // --- Check for wall tile ---
-        if (WallTilemap != null)
+        for (int dy = 0; dy < height; dy++)
         {
-            Vector3Int cellPos = WallTilemap.WorldToCell(position);
-            TileBase tile = WallTilemap.GetTile(cellPos);
-            if (tile != null)
+            Vector3 checkPos = new Vector3(baseX + dx + 0.5f, baseY + dy + 0.5f, 0f);
+
+            // 1️⃣ Wall check
+            if (WallTilemap != null)
             {
-                errorDisplay.ShowError("Cannot place unit here — wall in the way!");
+                Vector3Int cellPos = WallTilemap.WorldToCell(checkPos);
+                TileBase tile = WallTilemap.GetTile(cellPos);
+                if (tile != null)
+                {
+                    errorDisplay.ShowError("Cannot place unit here — wall in the way!");
+                    return;
+                }
+            }
+
+            // 2️⃣ Region check
+            bool inValidRegion = true;
+            if (phase == 0) // Attacker placement
+            {
+                inValidRegion =
+                    checkPos.x >= attackerRegionMin.x && checkPos.x <= attackerRegionMax.x &&
+                    checkPos.y >= attackerRegionMin.y && checkPos.y <= attackerRegionMax.y;
+                if (!inValidRegion)
+                {
+                    errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
+                    return;
+                }
+            }
+            else if (phase == 1) // Defender placement
+            {
+                inValidRegion =
+                    checkPos.x >= defenderRegionMin.x && checkPos.x <= defenderRegionMax.x &&
+                    checkPos.y >= defenderRegionMin.y && checkPos.y <= defenderRegionMax.y;
+                if (!inValidRegion)
+                {
+                    errorDisplay.ShowError("Cannot place unit here — outside defender region!");
+                    return;
+                }
+            }
+
+            // 3️⃣ Check for overlapping units
+            Collider2D hit = Physics2D.OverlapCircle(checkPos, 0.4f);
+            if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+            {
+                errorDisplay.ShowError("Cannot place unit here — space is blocked!");
                 return;
             }
         }
-
-        // --- Check region by phase ---
-        bool inValidRegion = true;
-
-        if (phase == 0) // Attacker placement
-        {
-            inValidRegion =
-                position.x >= attackerRegionMin.x && position.x <= attackerRegionMax.x &&
-                position.y >= attackerRegionMin.y && position.y <= attackerRegionMax.y;
-
-            if (!inValidRegion)
-            {
-                errorDisplay.ShowError("Cannot place unit here — outside attacker region!");
-                return;
-            }
-        }
-        else if (phase == 1) // Defender placement
-        {
-            inValidRegion =
-                position.x >= defenderRegionMin.x && position.x <= defenderRegionMax.x &&
-                position.y >= defenderRegionMin.y && position.y <= defenderRegionMax.y;
-
-            if (!inValidRegion)
-            {
-                errorDisplay.ShowError("Cannot place unit here — outside defender region!");
-                return;
-            }
-        }
-
-        // --- Check for overlapping unit ---
-        if (!CanPlaceUnit(itemPrefabs[selectedSlot], position))
-        {
-            errorDisplay.ShowError("Cannot place unit here — space is blocked!");
-            return;
-        }
-
-
-        // --- Instantiate unit ---
-        GameObject prefab = itemPrefabs[selectedSlot];
-
-        Vector3 spawnPos = position;
-        CharacterPathfindingMovementHandler footprint = prefab.GetComponent<CharacterPathfindingMovementHandler>();
-        if (footprint != null)
-        {
-            spawnPos.x += (footprint.width - 1) / 2f;
-            spawnPos.y += (footprint.height - 1) / 2f;
-        }
-
-        // Instantiate using the adjusted position
-        GameObject newUnit = Instantiate(prefab, spawnPos, Quaternion.identity);
-
-        // Assign team tag
-        if (phase == 0)
-            newUnit.tag = attackerTag;
-        else if (phase == 1)
-            newUnit.tag = defenderTag;
-
-        // Attach identity for recovery later
-        UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
-        id.sourcePrefab = prefab;
-
-        spawnedUnits.Add(newUnit);
-
-        // Clear hotbar slot
-        Images[selectedSlot].sprite = null;
-        Images[selectedSlot].color = new Color(0, 0, 0, 0f);
-        itemPrefabs[selectedSlot] = null;
-
-        // Destroy ghost & deselect
-        Destroy(currentGhost);
-        DeselectSlot();
     }
+
+    // --- Instantiate unit ---
+    Vector3 spawnPos = position;
+    if (footprint != null)
+    {
+        spawnPos.x += (footprint.width - 1) / 2f;
+        spawnPos.y += (footprint.height - 1) / 2f;
+    }
+
+    GameObject newUnit = Instantiate(prefab, spawnPos, Quaternion.identity);
+
+    // Assign team tag
+    newUnit.tag = phase == 0 ? attackerTag : defenderTag;
+
+    // Attach identity for recovery later
+    UnitIdentity id = newUnit.AddComponent<UnitIdentity>();
+    id.sourcePrefab = prefab;
+
+    spawnedUnits.Add(newUnit);
+
+    // Clear hotbar slot
+    Images[selectedSlot].sprite = null;
+    Images[selectedSlot].color = new Color(0, 0, 0, 0f);
+    itemPrefabs[selectedSlot] = null;
+
+    // Destroy ghost & deselect
+    Destroy(currentGhost);
+    DeselectSlot();
+}
+
 
 
     void AddToHotbar(GameObject obj)
