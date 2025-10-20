@@ -15,6 +15,7 @@ public class Testing : MonoBehaviour
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
     int[] attackerMovementPhases = { 2, 6, 10, 14, 18 };
     int[] defenderMovementPhases = { 4, 8, 12, 16, 20 };
+    public ErrorDisplay errorDisplay;
 
     private void Start()
     {
@@ -141,7 +142,7 @@ public class Testing : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("Cannot select this unit in the current phase.");
+                    errorDisplay.ShowError("Cannot select this unit in the current phase.");
                 }
             }
         }
@@ -182,7 +183,7 @@ public class Testing : MonoBehaviour
 
         if (totalCost > maxMoveCost)
         {
-            Debug.Log("Destination too far based on movement cost");
+            errorDisplay.ShowError("Destination too far based on movement cost");
             return;
         }
 
@@ -191,6 +192,13 @@ public class Testing : MonoBehaviour
         float cellSize = pathfinding.GetGrid().GetCellSize();
         Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
         Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
+
+        Collider2D hit = Physics2D.OverlapCircle(targetCenter, 0.4f);
+        if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
+        {
+            errorDisplay.ShowError("Cannot move unit here — another unit is already occupying this space!");
+            return;
+        }
 
         if (selectedCharacter.TryMove(targetCenter, hotbar.phase))
         {
