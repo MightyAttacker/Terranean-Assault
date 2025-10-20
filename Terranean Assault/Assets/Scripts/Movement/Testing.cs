@@ -178,61 +178,68 @@ public class Testing : MonoBehaviour
 
         if (hit.collider != null)
         {
-            var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
-            if (clickedCharacter != null && characters.Contains(clickedCharacter))
+            // Destroy movement ghost
+            if (movementGhost != null)
             {
-                // FIRST: Check if unit has already moved this phase
-                if (clickedCharacter.LastMovedPhase == hotbar.phase)
-                {
-                    Debug.Log($"{clickedCharacter.name} has already moved in phase {hotbar.phase}.");
-                    return; // Don't allow selection or highlight
-                }
+                Destroy(movementGhost);
+                movementGhost = null;
+            }
+            
+        var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+        if (clickedCharacter != null && characters.Contains(clickedCharacter))
+        {
+            // FIRST: Check if unit has already moved this phase
+            if (clickedCharacter.LastMovedPhase == hotbar.phase)
+            {
+                Debug.Log($"{clickedCharacter.name} has already moved in phase {hotbar.phase}.");
+                return; // Don't allow selection or highlight
+            }
 
-                // THEN: Check if unit matches current phase tag
-                bool canSelect =
-                    (System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
-                    (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag));
+            // THEN: Check if unit matches current phase tag
+            bool canSelect =
+                (System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
+                (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag));
 
-                if (canSelect)
+            if (canSelect)
+            {
+                selectedCharacter = clickedCharacter;
+                HighlightMovementRange(selectedCharacter);
+                Debug.Log($"Selected character: {selectedCharacter.name}");
+                if (movementGhost == null)
                 {
-                    selectedCharacter = clickedCharacter;
-                    HighlightMovementRange(selectedCharacter);
-                    Debug.Log($"Selected character: {selectedCharacter.name}");
-                    if (movementGhost == null)
+                    movementGhost = Instantiate(selectedCharacter.gameObject);
+
+                    // Disable colliders and scripts that affect logic
+                    foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
+                        collider.enabled = false;
+                    foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
+                        script.enabled = false;
+
+                    // Make it semi-transparent
+                    var renderers = movementGhost.GetComponentsInChildren<SpriteRenderer>();
+                    foreach (var r in renderers)
                     {
-                        movementGhost = Instantiate(selectedCharacter.gameObject);
-
-                        // Disable colliders and scripts that affect logic
-                        foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
-                            collider.enabled = false;
-                        foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
-                            script.enabled = false;
-
-                        // Make it semi-transparent
-                        var renderers = movementGhost.GetComponentsInChildren<SpriteRenderer>();
-                        foreach (var r in renderers)
-                        {
-                            Color c = r.color;
-                            c.a = 0.5f;
-                            r.color = c;
-                        }
+                        Color c = r.color;
+                        c.a = 0.5f;
+                        r.color = c;
                     }
+                }
 
-                }
-                else
-                {
-                    errorDisplay.ShowError("Cannot select this unit in the current phase.");
-                }
+            }
+            else
+            {
+                errorDisplay.ShowError("Cannot select this unit in the current phase.");
             }
         }
     }
+}
 
-    private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
-    {
-        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
-        var clickedChar = hit.collider?.GetComponent<CharacterPathfindingMovementHandler>();
-        return clickedChar != null && characters.Contains(clickedChar);
-    }
+private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
+{
+    RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+    var clickedChar = hit.collider?.GetComponent<CharacterPathfindingMovementHandler>();
+    return clickedChar != null && characters.Contains(clickedChar);
+}
 
 private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
 {
@@ -327,76 +334,76 @@ private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
     }
 }
 
-    private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
+private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
+{
+    if (character == null) return;
+
+    pathfindingVisual.ClearHighlights();
+
+    Vector3 charWorldPos = character.transform.position;
+    pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
+
+    int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
+    List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
+
+    pathfindingVisual.HighlightNodes(reachableNodes, Color.blue);
+}
+
+private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
+{
+    List<PathNode> reachableNodes = new();
+    Grid<PathNode> grid = pathfinding.GetGrid();
+
+    int width = grid.GetWidth();
+    int height = grid.GetHeight();
+
+    bool[,] visited = new bool[width, height];
+    int[,] costSoFar = new int[width, height];
+
+    Queue<PathNode> queue = new();
+
+    PathNode startNode = grid.GetGridObject(startX, startY);
+    visited[startX, startY] = true;
+    costSoFar[startX, startY] = 0;
+
+    queue.Enqueue(startNode);
+    reachableNodes.Add(startNode);
+
+    while (queue.Count > 0)
     {
-        if (character == null) return;
+        PathNode current = queue.Dequeue();
 
-        pathfindingVisual.ClearHighlights();
-
-        Vector3 charWorldPos = character.transform.position;
-        pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
-
-        int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
-        List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
-
-        pathfindingVisual.HighlightNodes(reachableNodes, Color.blue);
-    }
-
-    private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
-    {
-        List<PathNode> reachableNodes = new();
-        Grid<PathNode> grid = pathfinding.GetGrid();
-
-        int width = grid.GetWidth();
-        int height = grid.GetHeight();
-
-        bool[,] visited = new bool[width, height];
-        int[,] costSoFar = new int[width, height];
-
-        Queue<PathNode> queue = new();
-
-        PathNode startNode = grid.GetGridObject(startX, startY);
-        visited[startX, startY] = true;
-        costSoFar[startX, startY] = 0;
-
-        queue.Enqueue(startNode);
-        reachableNodes.Add(startNode);
-
-        while (queue.Count > 0)
+        foreach (PathNode neighbor in pathfinding.GetNeighbourList(current))
         {
-            PathNode current = queue.Dequeue();
+            if (!neighbor.isWalkable) continue;
 
-            foreach (PathNode neighbor in pathfinding.GetNeighbourList(current))
+            int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14;
+            int newCost = costSoFar[current.x, current.y] + movementCost;
+
+            if (newCost <= maxMoveCost)
             {
-                if (!neighbor.isWalkable) continue;
-
-                int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14;
-                int newCost = costSoFar[current.x, current.y] + movementCost;
-
-                if (newCost <= maxMoveCost)
+                if (!visited[neighbor.x, neighbor.y])
                 {
-                    if (!visited[neighbor.x, neighbor.y])
-                    {
-                        visited[neighbor.x, neighbor.y] = true;
-                        costSoFar[neighbor.x, neighbor.y] = newCost;
-                        queue.Enqueue(neighbor);
-                        reachableNodes.Add(neighbor);
-                    }
-                    else if (newCost < costSoFar[neighbor.x, neighbor.y])
-                    {
-                        costSoFar[neighbor.x, neighbor.y] = newCost;
-                        queue.Enqueue(neighbor);
-                    }
+                    visited[neighbor.x, neighbor.y] = true;
+                    costSoFar[neighbor.x, neighbor.y] = newCost;
+                    queue.Enqueue(neighbor);
+                    reachableNodes.Add(neighbor);
+                }
+                else if (newCost < costSoFar[neighbor.x, neighbor.y])
+                {
+                    costSoFar[neighbor.x, neighbor.y] = newCost;
+                    queue.Enqueue(neighbor);
                 }
             }
         }
-
-        return reachableNodes;
     }
 
-    private bool IsWithinGridBounds(int x, int y)
-    {
-        return x >= 0 && y >= 0 && x < pathfinding.GetGrid().GetWidth() && y < pathfinding.GetGrid().GetHeight();
-    }
+    return reachableNodes;
+}
+
+private bool IsWithinGridBounds(int x, int y)
+{
+    return x >= 0 && y >= 0 && x < pathfinding.GetGrid().GetWidth() && y < pathfinding.GetGrid().GetHeight();
+}
 
 }
