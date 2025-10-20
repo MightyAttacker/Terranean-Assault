@@ -29256,6 +29256,11 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 3910777302283021616, guid: 04c860c17e3d17f4b854158aac05441a,
         type: 3}
+      propertyPath: errorDisplay
+      value: 
+      objectReference: {fileID: 77888447}
+    - target: {fileID: 3910777302283021616, guid: 04c860c17e3d17f4b854158aac05441a,
+        type: 3}
       propertyPath: AssaultLeader
       value: 
       objectReference: {fileID: 3771261067173815011, guid: b5780932568c7604e823829364b91728,

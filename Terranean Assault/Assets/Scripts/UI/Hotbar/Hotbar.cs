@@ -13,6 +13,7 @@ using UnityEngine.SceneManagement;
 
 public class Hotbar : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     [Header("Images")]
     public Image[] Images;
 
@@ -226,7 +227,16 @@ public class Hotbar : MonoBehaviour
             // Snap to grid center
             mouseWorld.x = Mathf.Floor(mouseWorld.x) + 0.5f;
             mouseWorld.y = Mathf.Floor(mouseWorld.y) + 0.5f;
-            currentGhost.transform.position = mouseWorld;
+
+            Vector3 ghostPos = mouseWorld;
+            CharacterPathfindingMovementHandler footprint = currentGhost.GetComponent<CharacterPathfindingMovementHandler>();
+            if (footprint != null)
+            {
+                ghostPos.x += (footprint.width - 1) / 2f;
+                ghostPos.y += (footprint.height - 1) / 2f;
+            }
+
+            currentGhost.transform.position = ghostPos;
 
             // Check for wall tile
             bool overWall = false;
@@ -236,7 +246,28 @@ public class Hotbar : MonoBehaviour
                 overWall = WallTilemap.GetTile(cellPos) != null;
             }
 
-            // === Region + wall feedback ===
+            // Check for overlapping units
+            bool overUnit = false;
+            if (footprint != null)
+            {
+                for (int dx = 0; dx < footprint.width; dx++)
+                {
+                    for (int dy = 0; dy < footprint.height; dy++)
+                    {
+                        Vector2 checkPos = new Vector2(mouseWorld.x - (footprint.width - 1) / 2f + dx,
+                                                       mouseWorld.y - (footprint.height - 1) / 2f + dy);
+                        Collider2D hit = Physics2D.OverlapCircle(checkPos, 0.4f);
+                        if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+                        {
+                            overUnit = true;
+                            break;
+                        }
+                    }
+                    if (overUnit) break;
+                }
+            }
+
+            // === Region + wall + unit feedback ===
             bool inValidRegion = true;
 
             if (phase == 0)
@@ -252,16 +283,17 @@ public class Hotbar : MonoBehaviour
                     mouseWorld.y >= defenderRegionMin.y && mouseWorld.y <= defenderRegionMax.y;
             }
 
-            // Combined condition: red if over wall OR outside region
-            bool invalidPlacement = overWall || !inValidRegion;
+            // Combined condition: red if over wall OR overlapping unit OR outside region
+            bool invalidPlacement = overWall || overUnit || !inValidRegion;
 
             SpriteRenderer[] renderers = currentGhost.GetComponentsInChildren<SpriteRenderer>();
             foreach (var r in renderers)
             {
                 Color c = invalidPlacement ? Color.red : Color.white;
-                c.a = 0.5f;
+                c.a = 0.7f;
                 r.color = c;
             }
+
 
             // Left click = place
             if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !overWall)
@@ -420,6 +452,40 @@ public class Hotbar : MonoBehaviour
             slots[i].color = (i == index) ? Color.cyan : Color.white;
     }
 
+    private bool CanPlaceUnit(GameObject prefab, Vector3 position)
+    {
+        CharacterPathfindingMovementHandler footprint = prefab.GetComponent<CharacterPathfindingMovementHandler>();
+        if (footprint == null) footprint = prefab.AddComponent<CharacterPathfindingMovementHandler>(); // default to 1x1 if missing
+
+        for (int x = 0; x < footprint.width; x++)
+        {
+            for (int y = 0; y < footprint.height; y++)
+            {
+                Vector3 cellPos = new Vector3(
+                    Mathf.Floor(position.x) + 0.5f + x,
+                    Mathf.Floor(position.y) + 0.5f + y,
+                    0f
+                );
+
+                // Check if tile is a wall
+                if (WallTilemap != null)
+                {
+                    Vector3Int tile = WallTilemap.WorldToCell(cellPos);
+                    if (WallTilemap.GetTile(tile) != null)
+                        return false; // blocked by wall
+                }
+
+                // Check for overlapping units
+                Collider2D hit = Physics2D.OverlapCircle(cellPos, 0.4f);
+                if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+                    return false; // occupied by unit
+            }
+        }
+
+        return true;
+    }
+
+
     void PlaceItem(Vector3 position)
     {
         if (selectedSlot < 0 || itemPrefabs[selectedSlot] == null)
@@ -466,16 +532,26 @@ public class Hotbar : MonoBehaviour
         }
 
         // --- Check for overlapping unit ---
-        Collider2D hit = Physics2D.OverlapCircle(position, 0.4f);
-        if (hit != null && (hit.CompareTag(attackerTag) || hit.CompareTag(defenderTag)))
+        if (!CanPlaceUnit(itemPrefabs[selectedSlot], position))
         {
-            errorDisplay.ShowError("Cannot place unit here — another unit is in the way!");
+            errorDisplay.ShowError("Cannot place unit here — space is blocked!");
             return;
         }
 
+
         // --- Instantiate unit ---
         GameObject prefab = itemPrefabs[selectedSlot];
-        GameObject newUnit = Instantiate(prefab, position, Quaternion.identity);
+
+        Vector3 spawnPos = position;
+        CharacterPathfindingMovementHandler footprint = prefab.GetComponent<CharacterPathfindingMovementHandler>();
+        if (footprint != null)
+        {
+            spawnPos.x += (footprint.width - 1) / 2f;
+            spawnPos.y += (footprint.height - 1) / 2f;
+        }
+
+        // Instantiate using the adjusted position
+        GameObject newUnit = Instantiate(prefab, spawnPos, Quaternion.identity);
 
         // Assign team tag
         if (phase == 0)
@@ -534,7 +610,7 @@ public class Hotbar : MonoBehaviour
         foreach (var r in renderers)
         {
             Color c = r.color;
-            c.a = 0.5f;
+            c.a = 0.7f;
             r.color = c;
         }
 

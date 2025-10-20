@@ -5,6 +5,7 @@ using CodeMonkey.Utils;
 
 public class Testing : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     [SerializeField] private PathfindingDebugStepVisual pathfindingDebugStepVisual;
     [SerializeField] private PathfindingVisual pathfindingVisual;
     [SerializeField] private Hotbar hotbar; // Reference Hotbar
@@ -16,6 +17,7 @@ public class Testing : MonoBehaviour
     int[] attackerMovementPhases = { 2, 6, 10, 14, 18 };
     int[] defenderMovementPhases = { 4, 8, 12, 16, 20 };
     public ErrorDisplay errorDisplay;
+    private GameObject movementGhost;
 
     private void Start()
     {
@@ -54,12 +56,69 @@ public class Testing : MonoBehaviour
 
             if (selectedCharacter != null && !IsClickOnCharacter(mouseWorld))
                 TryMoveSelectedCharacter(mouseWorld);
+
         }
 
         if (Input.GetMouseButtonDown(1)) // Right-click
         {
             TryUndoMove(mouseWorld);
         }
+
+        if (selectedCharacter != null && movementGhost != null)
+        {
+            mouseWorld.z = 0f;
+
+            // Snap to grid
+            int footprintWidth = selectedCharacter.width;
+            int footprintHeight = selectedCharacter.height;
+
+            int baseX = Mathf.FloorToInt(mouseWorld.x);
+            int baseY = Mathf.FloorToInt(mouseWorld.y);
+
+            Vector3 ghostPos = new Vector3(
+                baseX + footprintWidth * 0.5f,
+                baseY + footprintHeight * 0.5f,
+                0f
+            );
+
+            movementGhost.transform.position = ghostPos;
+
+            // Overlapping units
+            bool invalid = false;
+            for (int dx = 0; dx < footprintWidth; dx++)
+            {
+                for (int dy = 0; dy < footprintHeight; dy++)
+                {
+                    Vector2 checkPos = new Vector2(baseX + dx + 0.5f, baseY + dy + 0.5f);
+                    Collider2D hit = Physics2D.OverlapCircle(checkPos, 0.4f);
+                    if (hit != null)
+                    {
+                        var handler = hit.GetComponent<CharacterPathfindingMovementHandler>();
+                        if (handler != null && handler != selectedCharacter)
+                        {
+                            invalid = true;
+                            break;
+                        }
+                    }
+                }
+                if (invalid) break;
+            }
+
+
+            // Walls (optional if you want)
+            Vector3Int wallCell = wallTilemap.WorldToCell(ghostPos);
+            if (wallTilemap.GetTile(wallCell) != null) invalid = true;
+
+            // Change ghost color based on validity
+            var renderers = movementGhost.GetComponentsInChildren<SpriteRenderer>();
+            foreach (var r in renderers)
+            {
+                Color c = invalid ? Color.red : Color.white;
+                c.a = 0.7f;
+                r.color = c;
+            }
+        }
+
     }
 
     private void TryUndoMove(Vector3 mouseWorldPosition)
@@ -139,6 +198,26 @@ public class Testing : MonoBehaviour
                     selectedCharacter = clickedCharacter;
                     HighlightMovementRange(selectedCharacter);
                     Debug.Log($"Selected character: {selectedCharacter.name}");
+                    if (movementGhost == null)
+                    {
+                        movementGhost = Instantiate(selectedCharacter.gameObject);
+
+                        // Disable colliders and scripts that affect logic
+                        foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
+                            collider.enabled = false;
+                        foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
+                            script.enabled = false;
+
+                        // Make it semi-transparent
+                        var renderers = movementGhost.GetComponentsInChildren<SpriteRenderer>();
+                        foreach (var r in renderers)
+                        {
+                            Color c = r.color;
+                            c.a = 0.5f;
+                            r.color = c;
+                        }
+                    }
+
                 }
                 else
                 {
@@ -147,9 +226,6 @@ public class Testing : MonoBehaviour
             }
         }
     }
-
-
-
 
     private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
     {
@@ -162,11 +238,12 @@ public class Testing : MonoBehaviour
     {
         if (selectedCharacter == null) return;
 
-        pathfinding.GetGrid().GetXY(mouseWorldPosition, out int x, out int y);
+        var grid = pathfinding.GetGrid();
+        grid.GetXY(mouseWorldPosition, out int x, out int y);
         if (!IsWithinGridBounds(x, y)) return;
 
         Vector3 charWorldPos = selectedCharacter.transform.position;
-        pathfinding.GetGrid().GetXY(charWorldPos, out int startX, out int startY);
+        grid.GetXY(charWorldPos, out int startX, out int startY);
 
         List<PathNode> path = pathfinding.FindPath(startX, startY, x, y);
         if (path == null) return;
@@ -179,8 +256,7 @@ public class Testing : MonoBehaviour
             totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14;
         }
 
-        int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
-
+        int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / grid.GetCellSize()) * 10;
         if (totalCost > maxMoveCost)
         {
             errorDisplay.ShowError("Destination too far based on movement cost");
@@ -189,22 +265,54 @@ public class Testing : MonoBehaviour
 
         pathfindingVisual.ClearHighlights();
 
-        float cellSize = pathfinding.GetGrid().GetCellSize();
-        Vector3 cellOffset = Vector3.one * cellSize * 0.5f;
-        Vector3 targetCenter = new Vector3(x, y) * cellSize + cellOffset;
+        // --- Footprint info ---
+        int footprintWidth = selectedCharacter.width;
+        int footprintHeight = selectedCharacter.height;
 
-        Collider2D hit = Physics2D.OverlapCircle(targetCenter, 0.4f);
-        if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
+        // Snap mouse click to bottom-left of footprint
+        int baseX = x;
+        int baseY = y;
+
+        // Check if all cells the unit would occupy are free
+        for (int dx = 0; dx < footprintWidth; dx++)
         {
-            errorDisplay.ShowError("Cannot move unit here — another unit is already occupying this space!");
-            return;
-        }
+            for (int dy = 0; dy < footprintHeight; dy++)
+            {
+                Vector3 cellPos = new Vector3(
+                    baseX + dx + 0.5f,
+                    baseY + dy + 0.5f,
+                    0f
+                );
 
-        if (selectedCharacter.TryMove(targetCenter, hotbar.phase))
+                Collider2D hit = Physics2D.OverlapCircle(cellPos, 0.4f);
+                if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
+                {
+                    errorDisplay.ShowError("Cannot move unit here — another unit is already occupying this space!");
+                    return;
+                }
+            }
+        }
+        Debug.Log($"SelectedCharacter: {selectedCharacter.name}, Width: {selectedCharacter.width}, Height: {selectedCharacter.height}");
+
+        // Calculate center position of the footprint
+        Vector3 targetPosition = new Vector3(
+        baseX + (footprintWidth * 0.5f),
+        baseY + (footprintHeight * 0.5f)
+    );
+
+        // Move unit if valid
+        if (selectedCharacter.TryMove(targetPosition, hotbar.phase))
         {
             selectedCharacter = null;
         }
+        if (movementGhost != null)
+        {
+            Destroy(movementGhost);
+            movementGhost = null;
+        }
     }
+
+
 
     private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
     {
@@ -277,4 +385,5 @@ public class Testing : MonoBehaviour
     {
         return x >= 0 && y >= 0 && x < pathfinding.GetGrid().GetWidth() && y < pathfinding.GetGrid().GetHeight();
     }
+
 }
