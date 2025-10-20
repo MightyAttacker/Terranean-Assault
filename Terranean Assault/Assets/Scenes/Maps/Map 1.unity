@@ -3069,7 +3069,6 @@ GameObject:
   - component: {fileID: 527276406}
   - component: {fileID: 527276405}
   - component: {fileID: 527276404}
-  - component: {fileID: 527276408}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -3156,7 +3155,6 @@ RectTransform:
   - {fileID: 1693553211}
   - {fileID: 186597566}
   - {fileID: 297881328}
-  - {fileID: 737050689}
   - {fileID: 1312926660}
   - {fileID: 504038265}
   - {fileID: 77888445}
@@ -3164,6 +3162,7 @@ RectTransform:
   - {fileID: 432022748}
   - {fileID: 1929008963}
   - {fileID: 1434027092}
+  - {fileID: 737050689}
   - {fileID: 57505052}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3172,18 +3171,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &527276408
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 527276403}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c64752d671e01014ea8dc3a7c0cd1c84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MessageTester
 --- !u!1 &531235526
 GameObject:
   m_ObjectHideFlags: 0
