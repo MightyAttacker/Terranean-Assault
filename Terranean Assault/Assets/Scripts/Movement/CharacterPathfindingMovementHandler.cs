@@ -22,10 +22,16 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     [SerializeField] private float meleeDamage = 2;
     [SerializeField] private float rangedDamage = 1;
 
+    [Tooltip("Width (in tiles) of the unit footprint.")]
+    public int width = 1;
+
+    [Tooltip("Height (in tiles) of the unit footprint.")]
+    public int height = 1;
+
     public float GetObjectiveControlValue()
     {
-       return objectiveControl;
-   }
+        return objectiveControl;
+    }
 
     private void Awake()
     {

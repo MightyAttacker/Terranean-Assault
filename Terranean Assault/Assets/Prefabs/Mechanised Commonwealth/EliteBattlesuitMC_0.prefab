@@ -30,8 +30,8 @@ Transform:
   m_GameObject: {fileID: 6870108145094802410}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.98, y: 4, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 1}
+  m_LocalPosition: {x: 4.4997, y: 5.5221, z: 0}
+  m_LocalScale: {x: 2.9206, y: 3.0366, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -125,6 +125,8 @@ MonoBehaviour:
   health: 2
   meleeDamage: 2
   rangedDamage: 1
+  width: 3
+  height: 3
 --- !u!50 &9057599544409632420
 Rigidbody2D:
   serializedVersion: 5

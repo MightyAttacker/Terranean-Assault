@@ -5575,6 +5575,8 @@ MonoBehaviour:
   health: 2
   meleeDamage: 2
   rangedDamage: 1
+  width: 1
+  height: 1
 --- !u!50 &993451497
 Rigidbody2D:
   serializedVersion: 5
