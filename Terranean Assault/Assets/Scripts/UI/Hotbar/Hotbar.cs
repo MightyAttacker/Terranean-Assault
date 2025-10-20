@@ -611,7 +611,7 @@ public class Hotbar : MonoBehaviour
             {
                 int scoreboardIndex = (phase - 5) / 4; // Maps 5→0, 9→1, 13→2, 17→3
                 int Score = 0;
-                int Turn = scoreboardIndex + 1;
+                int Turn = scoreboardIndex + 2;
 
                 for (int i = 1; i <= 4; i++)
                 {
@@ -621,15 +621,15 @@ public class Hotbar : MonoBehaviour
                         TotalScoreAttacker += 5;
                     }
                 }
-
                 UpdateAttackerScore(scoreboardIndex, "Round " + Turn + " -\n" + Score.ToString());
                 UpdateAttackerScore(5, "Total -\n" + TotalScoreAttacker.ToString());
+
             }
             else if (phase == 7 || phase == 11 || phase == 15 || phase == 19)
             {
                 int scoreboardIndex = (phase - 7) / 4; // Maps 5→0, 9→1, 13→2, 17→3
                 int Score = 0;
-                int Turn = scoreboardIndex + 1;
+                int Turn = scoreboardIndex + 2;
 
                 for (int i = 1; i <= 4; i++)
                 {
@@ -654,9 +654,9 @@ public class Hotbar : MonoBehaviour
                         TotalScoreDefender += 5;
                     }
                 }
-                UpdateDefenderScore(4, "Round 5 -\n" + ScoreD.ToString());
-                UpdateDefenderScore(5, "Total -\n" + TotalScoreDefender.ToString());       
-                
+                UpdateDefenderScore(4, "Game End -\n" + ScoreD.ToString());
+                UpdateDefenderScore(5, "Total -\n" + TotalScoreDefender.ToString());
+
                 int ScoreA = 0;
                 for (int i = 1; i <= 4; i++)
                 {
@@ -666,8 +666,8 @@ public class Hotbar : MonoBehaviour
                         TotalScoreAttacker += 5;
                     }
                 }
-                UpdateAttackerScore(4, "Round 5 -\n" + ScoreA.ToString());
-                UpdateAttackerScore(5, "Total -\n" + TotalScoreAttacker.ToString());            
+                UpdateAttackerScore(4, "Game End -\n" + ScoreA.ToString());
+                UpdateAttackerScore(5, "Total -\n" + TotalScoreAttacker.ToString());
             }
 
             // Set phase text via lookup table
