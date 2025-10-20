@@ -158,8 +158,8 @@ public class Hotbar : MonoBehaviour
 
     // Predefined units
     public GameObject Blank;
-    public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank;
-    public GameObject AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport;
+    public GameObject Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank, ATV;
+    public GameObject AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport, ReconTeam, JumpPackBattlesuit, HeavyBattlesuit, EliteBattlesuit;
     void Start()
     {
         mainCam = Camera.main;
@@ -191,7 +191,7 @@ public class Hotbar : MonoBehaviour
         itemPrefabs[4] = Sniper;
         itemPrefabs[5] = Soldier;
         itemPrefabs[6] = Tank;
-        itemPrefabs[7] = Tank;
+        itemPrefabs[7] = ATV;
         itemPrefabs[8] = Blank;
 
         UpdateHotbarSprites();
@@ -585,10 +585,10 @@ public class Hotbar : MonoBehaviour
                 itemPrefabs[1] = AssaultSargent;
                 itemPrefabs[2] = AssaultTransport;
                 itemPrefabs[3] = AssaultTransport;
-                itemPrefabs[4] = AssaultSquad;
-                itemPrefabs[5] = AssaultSquad;
-                itemPrefabs[6] = AssaultSquad;
-                itemPrefabs[7] = AssaultSquad;
+                itemPrefabs[4] = EliteBattlesuit;
+                itemPrefabs[5] = HeavyBattlesuit;
+                itemPrefabs[6] = JumpPackBattlesuit;
+                itemPrefabs[7] = ReconTeam;
                 itemPrefabs[8] = AssaultSquad;
 
                 UpdateHotbarSprites();
@@ -845,8 +845,8 @@ public class Hotbar : MonoBehaviour
         foreach (var prefab in itemPrefabs)
             if (prefab != null && prefab.name == name) return prefab;
 
-        GameObject[] allUnits = { Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank,
-                                 AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport };
+        GameObject[] allUnits = { Engineer, HeavyWeapons, Medic, Scout, Sniper, Soldier, Tank, ATV,
+                                 AssaultLeader, AssaultSargent, AssaultSquad, AssaultTransport, HeavyBattlesuit, EliteBattlesuit, JumpPackBattlesuit, ReconTeam};
 
         foreach (var unit in allUnits)
             if (unit != null && unit.name == name) return unit;

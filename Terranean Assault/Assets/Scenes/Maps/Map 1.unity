@@ -2954,6 +2954,7 @@ MonoBehaviour:
   Sniper: {fileID: 3706223228574245351, guid: 180022e1dc16ba84b9bfed12d32083b9, type: 3}
   Soldier: {fileID: 6449158475792463234, guid: 77e664745a25b4e46bc4875d5e6155dd, type: 3}
   Tank: {fileID: 8590168648900800359, guid: 95de4ad8920983948ba7debffd39b0be, type: 3}
+  ATV: {fileID: 8265856921231167321, guid: a2293d3324debc046b4bfe4d5621dff0, type: 3}
   AssaultLeader: {fileID: 3771261067173815011, guid: b5780932568c7604e823829364b91728,
     type: 3}
   AssaultSargent: {fileID: 5827185757938238746, guid: aaac47209b4990f4ba3f32094c8f4edd,
@@ -2961,6 +2962,14 @@ MonoBehaviour:
   AssaultSquad: {fileID: 8105415175480189622, guid: f1bdd4d97d55d734eb7947eda8b86a35,
     type: 3}
   AssaultTransport: {fileID: 5786859918405285311, guid: c17e46eab2ebc4344ba7fddec98337dc,
+    type: 3}
+  ReconTeam: {fileID: 8932119866464704457, guid: 926744ba0dc914746b4794157f51b172,
+    type: 3}
+  JumpPackBattlesuit: {fileID: 3579240205095628643, guid: 61ef42dfaddd67c4380737d58615cd31,
+    type: 3}
+  HeavyBattlesuit: {fileID: 408206193702891813, guid: 839b557fd829ab446a94c30c19afefa2,
+    type: 3}
+  EliteBattlesuit: {fileID: 6870108145094802410, guid: 8e296d51fc42b6d4d896fade751935e2,
     type: 3}
 --- !u!1 &522216234
 GameObject:
