@@ -2,30 +2,36 @@ using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
+    public LayerMask enemyLayer;     // Assign layer in Inspector
+    public Hotbar hotbar;            // Assign Hotbar reference in Inspector
+
     public int damage = 5;           // Damage amount
-    public float attackRange = 1f;   // Distance to hit enemy
-    public LayerMask enemyLayer;     // Assign Enemy layer in Inspector
+    public float attackRange = 1f;   // Distance to hit units
+
+    public bool isAttacker = true;   // true = attacker, false = defender
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.B))  // Attack key
+        if (Input.GetMouseButtonDown(1) && IsCorrectPhase())
         {
             Attack();
         }
     }
 
+    bool IsCorrectPhase() =>
+        (isAttacker && (hotbar.phase - 3) % 4 == 0) ||
+        (!isAttacker && (hotbar.phase - 5) % 4 == 0);
+
     void Attack()
     {
-        // Detect enemies in range
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, attackRange, enemyLayer);
+        Collider2D[] hitUnits = Physics2D.OverlapCircleAll(transform.position, attackRange, enemyLayer);
 
-        foreach (Collider2D enemyCollider in hitEnemies)
+        foreach (Collider2D unitCollider in hitUnits)
         {
-            Enemy enemy = enemyCollider.GetComponent<Enemy>();
-            if (enemy != null)
+            if (unitCollider.TryGetComponent<UnitHealth>(out UnitHealth health))
             {
-                enemy.Damage(damage);
-                Debug.Log("Hit enemy: " + enemy.name);
+                health.TakeDamage(damage);
+                Debug.Log("Hit unit: " + unitCollider.name);
             }
         }
     }
