@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6495555079175053380
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8390123405295916330}
+  - component: {fileID: 3910777302283021616}
+  m_Layer: 0
+  m_Name: Testing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8390123405295916330
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6495555079175053380}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 10.2, y: -6, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3910777302283021616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6495555079175053380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ff6713717e69134fbe72f7b154bc856, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::aaa
+  pathfindingDebugStepVisual: {fileID: 0}
+  pathfindingVisual: {fileID: 0}
+  characters:
+  - {fileID: 2707432459286911697, guid: 77e664745a25b4e46bc4875d5e6155dd, type: 3}
+  - {fileID: 5554740237805793245, guid: dbaca4215ee5b824e9f583859f3f700f, type: 3}
+  - {fileID: 4921836704845049771, guid: 180022e1dc16ba84b9bfed12d32083b9, type: 3}
+  - {fileID: 2801658551219416174, guid: cddebf7dcde45ff49ad8fbe50ebecc04, type: 3}
+  - {fileID: 6397839425132426480, guid: 95de4ad8920983948ba7debffd39b0be, type: 3}
+  - {fileID: 4890612260709981085, guid: dd786d91829838646920c2719bca7674, type: 3}
+  - {fileID: 2659326941090174436, guid: 445784c1e064b1d49b797f91e4943554, type: 3}
+  - {fileID: 1233929669887321755, guid: f1bdd4d97d55d734eb7947eda8b86a35, type: 3}
+  - {fileID: 7638799275013628601, guid: b5780932568c7604e823829364b91728, type: 3}
+  - {fileID: 6115035818108438928, guid: aaac47209b4990f4ba3f32094c8f4edd, type: 3}
+  - {fileID: 7456925226680920365, guid: c17e46eab2ebc4344ba7fddec98337dc, type: 3}
+  wallTilemap: {fileID: 0}

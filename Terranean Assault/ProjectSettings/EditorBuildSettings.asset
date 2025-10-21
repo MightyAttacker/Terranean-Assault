@@ -6,13 +6,39 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Main Menu.unity
-    guid: 8258ea0ee51a34f658bf8892dfe0d616
-  - enabled: 1
-    path: Assets/Scenes/Load Menu.unity
+    path: Assets/Scenes/Menu/Load Menu.unity
     guid: b243cbe044a6a42169dd1ddcc4d8268c
   - enabled: 1
-    path: Assets/Scenes/Terranean Assault.unity
+    path: Assets/Scenes/Menu/Main Menu.unity
+    guid: 8258ea0ee51a34f658bf8892dfe0d616
+  - enabled: 1
+    path: Assets/Scenes/Menu/Options Menu.unity
+    guid: d049fb60eb19f4b27a0937d443febdfb
+  - enabled: 1
+    path: Assets/Scenes/Menu/Map select.unity
+    guid: ad2caced1e5c95548aa1924bb08552c7
+  - enabled: 1
+    path: Assets/Scenes/Maps/Map 1.unity
     guid: ffcb92f9de0a4664aa2a36880ffffefd
-  m_configObjects: {}
+  - enabled: 1
+    path: Assets/Scenes/Maps/Map 2.unity
+    guid: 98dec2ef28eda404c847e92359cdeeeb
+  - enabled: 1
+    path: Assets/Scenes/Maps/Map 3.unity
+    guid: c8c6e2cf12bfa5b4587f8b8584d3e849
+  - enabled: 1
+    path: Assets/Scenes/Maps/Map 4.unity
+    guid: c93bd628d2bcc18489b3422b7e2eba22
+  - enabled: 1
+    path: Assets/Scenes/Maps/Map 5.unity
+    guid: 68841c3726b629c41b164c6ee0cca403
+  - enabled: 1
+    path: Assets/Scenes/Maps/Map 6.unity
+    guid: 26b63744fd22efd4bb05c306ed9ce523
+  - enabled: 1
+    path: Assets/Scenes/Menu/Save Menu.unity
+    guid: fe3d2f1d597f043dda4a91c913578774
+  m_configObjects:
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f,
+      type: 2}
   m_UseUCBPForAssetBundles: 0
