@@ -7,8 +7,8 @@ using TMPro;
 using System.Collections;
 using Unity.VisualScripting;
 #if UNITY_EDITOR
-using UnityEditor.ShaderGraph;
-#endif
+using UnityEditor.ShaderGraph; //Edit: Karl Martinez-Benham
+#endif 
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using UnityEngine.SceneManagement;
