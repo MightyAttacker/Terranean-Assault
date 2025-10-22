@@ -2,30 +2,41 @@ using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
-    public int damage = 5;           // Damage amount
-    public float attackRange = 1f;   // Distance to hit enemy
-    public LayerMask enemyLayer;     // Assign Enemy layer in Inspector
+    public LayerMask enemyLayer;
+    public Hotbar hotbar;
+    public float attackRange = 1f;
+    public bool isAttacker = true;
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.B))  // Attack key
+        if (Input.GetMouseButtonDown(1) && IsCorrectPhase())
         {
             Attack();
         }
     }
 
+    bool IsCorrectPhase() =>
+        (isAttacker && (hotbar.phase - 3) % 4 == 0) ||
+        (!isAttacker && (hotbar.phase - 5) % 4 == 0);
+
     void Attack()
     {
-        // Detect enemies in range
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(transform.position, attackRange, enemyLayer);
+        if (!TryGetComponent<CharacterPathfindingMovementHandler>(out var movementHandler))
+            return;
 
-        foreach (Collider2D enemyCollider in hitEnemies)
+        int actualDamage = Mathf.RoundToInt(movementHandler.MeleeDamage);
+
+        Collider2D[] hitUnits = Physics2D.OverlapCircleAll(transform.position, attackRange);
+
+        foreach (Collider2D unitCollider in hitUnits)
         {
-            Enemy enemy = enemyCollider.GetComponent<Enemy>();
-            if (enemy != null)
+            if (!unitCollider.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag))
+                continue;
+
+            if (unitCollider.TryGetComponent<UnitHealth>(out UnitHealth health))
             {
-                enemy.Damage(damage);
-                Debug.Log("Hit enemy: " + enemy.name);
+                health.TakeDamage(actualDamage);
+                Debug.Log($"Hit unit: {unitCollider.name} for {actualDamage} damage");
             }
         }
     }
