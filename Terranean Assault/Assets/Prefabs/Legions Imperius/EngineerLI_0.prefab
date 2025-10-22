@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4890612260709981085}
   - component: {fileID: 1183197778403798450}
   - component: {fileID: 7542058641986028706}
+  - component: {fileID: 6341297779100083120}
   m_Layer: 0
   m_Name: EngineerLI_0
   m_TagString: LegionsImperius
@@ -217,6 +218,24 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 8744279869453561481}
+--- !u!114 &6341297779100083120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1660666949322602796}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1
 --- !u!1 &5150369353785507827
 GameObject:
   m_ObjectHideFlags: 0

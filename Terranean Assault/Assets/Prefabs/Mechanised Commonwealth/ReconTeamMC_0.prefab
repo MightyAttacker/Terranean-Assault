@@ -122,6 +122,7 @@ GameObject:
   - component: {fileID: 7648796839986421872}
   - component: {fileID: 5059326205588472879}
   - component: {fileID: 5851353092719788267}
+  - component: {fileID: 1310353555383806490}
   m_Layer: 0
   m_Name: ReconTeamMC_0
   m_TagString: MechanisedCommonwealth
@@ -324,3 +325,21 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 9022178487548687668}
+--- !u!114 &1310353555383806490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8932119866464704457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1

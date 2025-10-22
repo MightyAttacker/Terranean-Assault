@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 6283255756731681696}
   - component: {fileID: 2659326941090174436}
   - component: {fileID: 1630610199982314088}
+  - component: {fileID: 8159461355296628971}
   m_Layer: 0
   m_Name: MedicLI_0
   m_TagString: LegionsImperius
@@ -307,3 +308,21 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 3725998815130759929}
+--- !u!114 &8159461355296628971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7194117310325499366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1

@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 942119635608701382}
   - component: {fileID: 806070932287140621}
   - component: {fileID: 281319221188361661}
+  - component: {fileID: 4234148501917522731}
   m_Layer: 0
   m_Name: HeavyBattlesuitWithRailgunMC_0
   m_TagString: MechanisedCommonwealth
@@ -217,6 +218,24 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 5074646673408283663}
+--- !u!114 &4234148501917522731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 408206193702891813}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1
 --- !u!1 &7612736251482761500
 GameObject:
   m_ObjectHideFlags: 0

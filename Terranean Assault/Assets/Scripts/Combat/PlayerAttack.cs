@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class PlayerAttack : MonoBehaviour
 {
@@ -6,6 +7,10 @@ public class PlayerAttack : MonoBehaviour
     public Hotbar hotbar;
     public float attackRange = 1f;
     public bool isAttacker = true;
+
+    // Phase arrays
+    int[] attackerFightPhases = { 2, 6, 10, 14, 18 };
+    int[] defenderFightPhases = { 4, 8, 12, 16, 20 };
 
     void Update()
     {
@@ -15,9 +20,13 @@ public class PlayerAttack : MonoBehaviour
         }
     }
 
-    bool IsCorrectPhase() =>
-        (isAttacker && (hotbar.phase - 3) % 4 == 0) ||
-        (!isAttacker && (hotbar.phase - 5) % 4 == 0);
+    bool IsCorrectPhase()
+    {
+        if (isAttacker)
+            return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
+        else
+            return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
+    }
 
     void Attack()
     {
@@ -28,15 +37,23 @@ public class PlayerAttack : MonoBehaviour
 
         Collider2D[] hitUnits = Physics2D.OverlapCircleAll(transform.position, attackRange);
 
+        HashSet<GameObject> hitObjects = new HashSet<GameObject>();
+
         foreach (Collider2D unitCollider in hitUnits)
         {
-            if (!unitCollider.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag))
+            GameObject unitObj = unitCollider.gameObject;
+
+            if (hitObjects.Contains(unitObj)) 
+                continue; // Already processed this unit
+
+            if (!unitObj.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag))
                 continue;
 
-            if (unitCollider.TryGetComponent<UnitHealth>(out UnitHealth health))
+            if (unitObj.TryGetComponent<UnitHealth>(out UnitHealth health))
             {
                 health.TakeDamage(actualDamage);
-                Debug.Log($"Hit unit: {unitCollider.name} for {actualDamage} damage");
+                Debug.Log($"Hit unit: {unitObj.name} for {actualDamage} damage");
+                hitObjects.Add(unitObj);
             }
         }
     }
