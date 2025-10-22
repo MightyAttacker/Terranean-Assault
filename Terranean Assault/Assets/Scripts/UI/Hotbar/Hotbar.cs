@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using TMPro;
 using System.Collections;
 using Unity.VisualScripting;
+#if UNITY_EDITOR
+using UnityEditor.ShaderGraph;
+#endif
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using UnityEngine.SceneManagement;
