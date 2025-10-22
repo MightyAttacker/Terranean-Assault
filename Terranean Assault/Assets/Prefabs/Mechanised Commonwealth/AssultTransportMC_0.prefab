@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 7456925226680920365}
   - component: {fileID: 287384129842906456}
   - component: {fileID: 714933110315795457}
+  - component: {fileID: 8577125113520478844}
   m_Layer: 0
   m_Name: AssultTransportMC_0
   m_TagString: MechanisedCommonwealth
@@ -308,3 +309,21 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 1963483460548840845}
+--- !u!114 &8577125113520478844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5786859918405285311}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1

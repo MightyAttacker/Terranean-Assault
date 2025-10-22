@@ -2766,6 +2766,7 @@ GameObject:
   - component: {fileID: 504038268}
   - component: {fileID: 504038267}
   - component: {fileID: 504038271}
+  - component: {fileID: 504038272}
   m_Layer: 5
   m_Name: HotbarManager
   m_TagString: LegionsImperius
@@ -2971,6 +2972,77 @@ MonoBehaviour:
     type: 3}
   EliteBattlesuit: {fileID: 6870108145094802410, guid: 8e296d51fc42b6d4d896fade751935e2,
     type: 3}
+--- !u!114 &504038272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 504038264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 401547c2d1fe5704385776894fb57ace, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hotbar
+  Images: []
+  WallTilemap: {fileID: 0}
+  itemPrefabs: []
+  slots: []
+  attackerTag: LegionsImperius
+  defenderTag: MechanisedCommonwealth
+  errorDisplay: {fileID: 0}
+  attackerRegionMin: {x: -10, y: -5}
+  attackerRegionMax: {x: -2, y: 5}
+  defenderRegionMin: {x: 2, y: -5}
+  defenderRegionMax: {x: 10, y: 5}
+  objective1RegionMin: {x: 2, y: -5}
+  objective1RegionMax: {x: 10, y: 5}
+  objective2RegionMin: {x: 2, y: -5}
+  objective2RegionMax: {x: 10, y: 5}
+  objective3RegionMin: {x: 2, y: -5}
+  objective3RegionMax: {x: 10, y: 5}
+  objective4RegionMin: {x: 2, y: -5}
+  objective4RegionMax: {x: 10, y: 5}
+  spawnedUnits: []
+  attackerScoreTexts: []
+  defenderScoreTexts: []
+  toggleModeButton: {fileID: 0}
+  toggleObjectives: {fileID: 0}
+  toggleScoreboard: {fileID: 0}
+  toggleDZ: {fileID: 0}
+  Exit: {fileID: 0}
+  PhaseTracker: {fileID: 0}
+  hotbarPanel: {fileID: 0}
+  Exits: {fileID: 0}
+  AttackerDZ: {fileID: 0}
+  DefenderDZ: {fileID: 0}
+  Objective1: {fileID: 0}
+  Objective2: {fileID: 0}
+  Objective3: {fileID: 0}
+  Objective4: {fileID: 0}
+  ScoreboardObject: {fileID: 0}
+  WinBanner: {fileID: 0}
+  EndScreen: {fileID: 0}
+  LeftClick: {fileID: 0}
+  RightClick: {fileID: 0}
+  phase: 0
+  Blank: {fileID: 0}
+  Engineer: {fileID: 0}
+  HeavyWeapons: {fileID: 0}
+  Medic: {fileID: 0}
+  Scout: {fileID: 0}
+  Sniper: {fileID: 0}
+  Soldier: {fileID: 0}
+  Tank: {fileID: 0}
+  ATV: {fileID: 0}
+  AssaultLeader: {fileID: 0}
+  AssaultSargent: {fileID: 0}
+  AssaultSquad: {fileID: 0}
+  AssaultTransport: {fileID: 0}
+  ReconTeam: {fileID: 0}
+  JumpPackBattlesuit: {fileID: 0}
+  HeavyBattlesuit: {fileID: 0}
+  EliteBattlesuit: {fileID: 0}
 --- !u!1 &522216234
 GameObject:
   m_ObjectHideFlags: 0

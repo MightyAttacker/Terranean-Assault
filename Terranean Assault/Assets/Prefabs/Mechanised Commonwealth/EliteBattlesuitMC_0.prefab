@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 9057599544409632420}
   - component: {fileID: 8549217096863985577}
   - component: {fileID: 1075520328379010643}
+  - component: {fileID: 6521722062597944246}
   m_Layer: 0
   m_Name: EliteBattlesuitMC_0
   m_TagString: MechanisedCommonwealth
@@ -308,3 +309,21 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 4550408558167127654}
+--- !u!114 &6521722062597944246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6870108145094802410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1

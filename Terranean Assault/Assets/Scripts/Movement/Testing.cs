@@ -14,8 +14,13 @@ public class Testing : MonoBehaviour
     private CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
-    int[] attackerMovementPhases = { 2, 6, 10, 14, 18 };
-    int[] defenderMovementPhases = { 4, 8, 12, 16, 20 };
+
+    int[] attackerMovementPhases = { 1, 5, 9, 13, 17 };
+    int[] defenderMovementPhases = { 3, 7, 11, 15, 19 };
+
+    int[] attackerFightPhases = { 2, 6, 10, 14, 18 };
+    int[] defenderFightPhases = { 4, 8, 12, 16, 20 };
+
     public ErrorDisplay errorDisplay;
     private GameObject movementGhost;
 
@@ -173,66 +178,60 @@ public class Testing : MonoBehaviour
     }
 
     private void TrySelectCharacter(Vector3 mouseWorldPosition)
+{
+    RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+    if (hit.collider == null) return;
+
+    var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+    if (clickedCharacter == null) return;
+
+    // Only allow selecting units on your turn
+    bool isAttackerTurn = hotbar.phase % 4 == 1 || hotbar.phase % 4 == 2; // attacker's movement + fight
+    bool isDefenderTurn = hotbar.phase % 4 == 3 || hotbar.phase % 4 == 0; // defender's movement + fight
+
+    bool canSelect =
+        (isAttackerTurn && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
+        (isDefenderTurn && clickedCharacter.CompareTag(hotbar.defenderTag));
+
+    if (!canSelect)
     {
-        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
-
-        if (hit.collider != null)
-        {
-            // Destroy movement ghost
-            if (movementGhost != null)
-            {
-                Destroy(movementGhost);
-                movementGhost = null;
-            }
-            
-        var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
-        if (clickedCharacter != null && characters.Contains(clickedCharacter))
-        {
-            // FIRST: Check if unit has already moved this phase
-            if (clickedCharacter.LastMovedPhase == hotbar.phase)
-            {
-                Debug.Log($"{clickedCharacter.name} has already moved in phase {hotbar.phase}.");
-                return; // Don't allow selection or highlight
-            }
-
-            // THEN: Check if unit matches current phase tag
-            bool canSelect =
-                (System.Array.Exists(attackerMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
-                (System.Array.Exists(defenderMovementPhases, p => p == hotbar.phase) && clickedCharacter.CompareTag(hotbar.defenderTag));
-
-            if (canSelect)
-            {
-                selectedCharacter = clickedCharacter;
-                HighlightMovementRange(selectedCharacter);
-                Debug.Log($"Selected character: {selectedCharacter.name}");
-                if (movementGhost == null)
-                {
-                    movementGhost = Instantiate(selectedCharacter.gameObject);
-
-                    // Disable colliders and scripts that affect logic
-                    foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
-                        collider.enabled = false;
-                    foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
-                        script.enabled = false;
-
-                    // Make it semi-transparent
-                    var renderers = movementGhost.GetComponentsInChildren<SpriteRenderer>();
-                    foreach (var r in renderers)
-                    {
-                        Color c = r.color;
-                        c.a = 0.5f;
-                        r.color = c;
-                    }
-                }
-
-            }
-            else
-            {
-                errorDisplay.ShowError("Cannot select this unit in the current phase.");
-            }
-        }
+        errorDisplay.ShowError("Cannot select this unit in the current phase.");
+        return;
     }
+
+    if (clickedCharacter.LastMovedPhase == hotbar.phase)
+    {
+        errorDisplay.ShowError($"{clickedCharacter.name} has already acted in this phase.");
+        return;
+    }
+
+    selectedCharacter = clickedCharacter;
+    HighlightMovementRange(selectedCharacter);
+
+    // Create movement ghost
+    if (movementGhost != null)
+    {
+        Destroy(movementGhost);
+        movementGhost = null;
+    }
+
+    movementGhost = Instantiate(selectedCharacter.gameObject);
+
+    foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
+        collider.enabled = false;
+
+    foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
+        script.enabled = false;
+
+    foreach (var renderer in movementGhost.GetComponentsInChildren<SpriteRenderer>())
+    {
+        Color c = renderer.color;
+        c.a = 0.5f;
+        renderer.color = c;
+    }
+    Debug.Log($"Selected character: {selectedCharacter.name}");
 }
+
 
 private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
 {

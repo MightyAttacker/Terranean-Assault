@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5383947315764257079}
   - component: {fileID: 1853038675846922294}
   - component: {fileID: 5229764406419886093}
+  - component: {fileID: 6836480410121845501}
   m_Layer: 0
   m_Name: JumpPackBattlesuitMC_0
   m_TagString: MechanisedCommonwealth
@@ -217,6 +218,24 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 1994837402103367736}
+--- !u!114 &6836480410121845501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3579240205095628643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1
 --- !u!1 &3733231782243444769
 GameObject:
   m_ObjectHideFlags: 0

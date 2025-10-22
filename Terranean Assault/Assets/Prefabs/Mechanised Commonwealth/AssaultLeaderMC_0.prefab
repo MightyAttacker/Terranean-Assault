@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 7632207928414571786}
   - component: {fileID: 7638799275013628601}
   - component: {fileID: 7515263911041982615}
+  - component: {fileID: 861926747367205721}
   m_Layer: 0
   m_Name: AssaultLeaderMC_0
   m_TagString: MechanisedCommonwealth
@@ -308,3 +309,21 @@ MonoBehaviour:
   maxHealth: 10
   currentHealth: 0
   healthBar: {fileID: 8257789826091624570}
+--- !u!114 &861926747367205721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3771261067173815011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47371c6e4cef86446ba67eb49678a60c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  hotbar: {fileID: 0}
+  attackRange: 1
+  isAttacker: 1
