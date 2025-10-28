@@ -7,15 +7,14 @@ public class SceneManagerScript : MonoBehaviour
     {
         SceneManager.LoadScene(sceneName);
     }
-    public void MainMenu()
-    {
-        SceneManager.LoadSceneAsync(1);
-    }
     public void Options()
     {
         SceneManager.LoadSceneAsync(2);
     }
-    
+    public void MainMenu()
+    {
+        SceneManager.LoadSceneAsync(1);
+    }
     public void QuitGame()
     {
         GameUtils.QuitGame();
