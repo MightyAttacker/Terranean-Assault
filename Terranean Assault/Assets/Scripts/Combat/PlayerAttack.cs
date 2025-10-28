@@ -43,7 +43,7 @@ public class PlayerAttack : MonoBehaviour
         {
             GameObject unitObj = unitCollider.gameObject;
 
-            if (hitObjects.Contains(unitObj)) 
+            if (hitObjects.Contains(unitObj))
                 continue; // Already processed this unit
 
             if (!unitObj.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag))
