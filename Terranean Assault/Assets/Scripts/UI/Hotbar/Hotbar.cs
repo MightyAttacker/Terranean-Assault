@@ -35,6 +35,12 @@ public class Hotbar : MonoBehaviour
     [Tooltip("Defender Tag (e.g., 'MechanisedCommonwealth')")]
     public string defenderTag = "MechanisedCommonwealth";
 
+    [HideInInspector]
+    public int[] attackerFightPhases = { 3, 7, 11, 15, 19 };
+
+    [HideInInspector]
+    public int[] defenderFightPhases = { 5, 9, 13, 17, 21 };
+
     [Header("Error Display")]
     public ErrorDisplay errorDisplay;
 
