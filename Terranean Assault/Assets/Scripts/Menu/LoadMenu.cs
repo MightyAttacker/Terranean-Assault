@@ -14,7 +14,7 @@ public class LoadMenu : MonoBehaviour
     }
     public void Back()
     {
-        SceneManager.LoadSceneAsync(1);
+        SceneManager.LoadSceneAsync(0);
     }
 
     public void QuitGame()

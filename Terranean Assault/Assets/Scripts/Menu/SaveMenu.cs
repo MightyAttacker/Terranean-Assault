@@ -6,7 +6,7 @@ public class SaveMenu : MonoBehaviour
     public void Back()
     {
        
-        SceneManager.LoadSceneAsync(0);
+        SceneManager.LoadSceneAsync(1);
     }
 
     public void QuitGame()

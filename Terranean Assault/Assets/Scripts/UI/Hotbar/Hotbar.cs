@@ -967,9 +967,17 @@ public class Hotbar : MonoBehaviour
 
     }
 
-    public void ExitPage()
+    public void Options()
+    {
+        SceneManager.LoadSceneAsync(2);
+    }
+    public void MainMenu()
     {
         SceneManager.LoadSceneAsync(1);
+    }
+    public void QuitGame()
+    {
+        GameUtils.QuitGame();
     }
 
     GameObject FindPrefabByName(string name)

@@ -5,10 +5,10 @@ public class OptionsMenu : MonoBehaviour
 {
     public void Accept()
     {
-        SceneManager.LoadSceneAsync(1);
+        SceneManager.LoadSceneAsync(0);
     }
     public void Cancel()
     {
-        SceneManager.LoadSceneAsync(1);
+        SceneManager.LoadSceneAsync(0);
     }
 }
