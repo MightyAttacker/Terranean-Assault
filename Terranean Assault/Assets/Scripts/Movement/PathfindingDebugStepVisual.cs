@@ -26,21 +26,22 @@ public class PathfindingDebugStepVisual : MonoBehaviour
 
     public void Setup(Grid<PathNode> grid)
     {
-        ClearVisualNodes();
+        // ClearVisualNodes();
 
-        visualNodeArray = new Transform[grid.GetWidth(), grid.GetHeight()];
+        // visualNodeArray = new Transform[grid.GetWidth(), grid.GetHeight()];
 
-        for (int x = 0; x < grid.GetWidth(); x++)
-        {
-            for (int y = 0; y < grid.GetHeight(); y++)
-            {
-                Vector3 gridPosition = new Vector3(x, y) * grid.GetCellSize() + Vector3.one * grid.GetCellSize() * .5f;
-                Transform visualNode = CreateVisualNode(gridPosition);
-                visualNodeArray[x, y] = visualNode;
-                visualNodeList.Add(visualNode);
-            }
-        }
-        HideNodeVisuals();
+        // for (int x = 0; x < grid.GetWidth(); x++)
+        // {
+        //     for (int y = 0; y < grid.GetHeight(); y++)
+        //     {
+        //         Vector3 gridPosition = new Vector3(x, y) * grid.GetCellSize() + Vector3.one * grid.GetCellSize() * .5f;
+        //         Transform visualNode = CreateVisualNode(gridPosition);
+        //         visualNodeArray[x, y] = visualNode;
+        //         visualNodeList.Add(visualNode);
+        //     }
+        // }
+        // HideNodeVisuals();
+        return; 
     }
 
     private void Update()
