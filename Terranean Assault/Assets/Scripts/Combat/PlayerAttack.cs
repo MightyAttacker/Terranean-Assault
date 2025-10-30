@@ -9,24 +9,30 @@ public class PlayerAttack : MonoBehaviour
     public bool isAttacker = true;
 
     // Phase arrays
-    int[] attackerFightPhases = { 2, 6, 10, 14, 18 };
-    int[] defenderFightPhases = { 4, 8, 12, 16, 20 };
+    int[] attackerFightPhases = { 3, 7, 11, 15, 19 };
+    int[] defenderFightPhases = { 5, 9, 13, 17, 21 };
 
-    // void Update()
-    // {
-    //     if (Input.GetMouseButtonDown(1) && IsCorrectPhase())
-    //     {
-    //         Attack();
-    //     }
-    // }
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(1) && IsCorrectPhase())
+        {
+            Attack();
+        }
+    }
 
-    // bool IsCorrectPhase()
-    // {
-    //     if (isAttacker)
-    //         return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
-    //     else
-    //         return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
-    // }
+    bool IsCorrectPhase()
+    {
+        if (hotbar == null)
+    {
+        Debug.LogWarning("Hotbar reference missing on PlayerAttack!");
+        return false;
+    }
+        
+        if (isAttacker)
+            return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
+        else
+            return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
+    }
 
     void Attack()
     {
