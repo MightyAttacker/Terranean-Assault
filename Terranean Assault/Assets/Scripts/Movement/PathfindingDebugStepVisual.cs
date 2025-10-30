@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +7,7 @@ using CodeMonkey.Utils;
 
 public class PathfindingDebugStepVisual : MonoBehaviour
 {
+    //Author - Lachlan Klenk
 
     public static PathfindingDebugStepVisual Instance { get; private set; }
 
@@ -40,7 +41,6 @@ public class PathfindingDebugStepVisual : MonoBehaviour
                 visualNodeList.Add(visualNode);
             }
         }
-        HideNodeVisuals();
     }
 
     private void Update()
@@ -89,7 +89,6 @@ public class PathfindingDebugStepVisual : MonoBehaviour
     public void TakeSnapshot(Grid<PathNode> grid, PathNode current, List<PathNode> openList, List<PathNode> closedList)
     {
         GridSnapshotAction gridSnapshotAction = new GridSnapshotAction();
-        gridSnapshotAction.AddAction(HideNodeVisuals);
 
         for (int x = 0; x < grid.GetWidth(); x++)
         {
@@ -110,7 +109,6 @@ public class PathfindingDebugStepVisual : MonoBehaviour
                 gridSnapshotAction.AddAction(() =>
                 {
                     Transform visualNode = visualNodeArray[tmpX, tmpY];
-                    SetupVisualNode(visualNode, gCost, hCost, fCost);
 
                     Color backgroundColor = UtilsClass.GetColorFromString("636363");
 
@@ -138,7 +136,6 @@ public class PathfindingDebugStepVisual : MonoBehaviour
     public void TakeSnapshotFinalPath(Grid<PathNode> grid, List<PathNode> path)
     {
         GridSnapshotAction gridSnapshotAction = new GridSnapshotAction();
-        gridSnapshotAction.AddAction(HideNodeVisuals);
 
         for (int x = 0; x < grid.GetWidth(); x++)
         {
@@ -157,7 +154,6 @@ public class PathfindingDebugStepVisual : MonoBehaviour
                 gridSnapshotAction.AddAction(() =>
                 {
                     Transform visualNode = visualNodeArray[tmpX, tmpY];
-                    SetupVisualNode(visualNode, gCost, hCost, fCost);
 
                     Color backgroundColor;
 
@@ -178,34 +174,11 @@ public class PathfindingDebugStepVisual : MonoBehaviour
         gridSnapshotActionList.Add(gridSnapshotAction);
     }
 
-    private void HideNodeVisuals()
-    {
-        foreach (Transform visualNodeTransform in visualNodeList)
-        {
-            SetupVisualNode(visualNodeTransform, 9999, 9999, 9999);
-        }
-    }
 
     private Transform CreateVisualNode(Vector3 position)
     {
         Transform visualNodeTransform = Instantiate(pfPathfindingDebugStepVisualNode, position, Quaternion.identity);
         return visualNodeTransform;
-    }
-
-    private void SetupVisualNode(Transform visualNodeTransform, int gCost, int hCost, int fCost)
-    {
-        if (fCost < 1000)
-        {
-            visualNodeTransform.Find("gCostText").GetComponent<TextMeshPro>().SetText(gCost.ToString());
-            visualNodeTransform.Find("hCostText").GetComponent<TextMeshPro>().SetText(hCost.ToString());
-            visualNodeTransform.Find("fCostText").GetComponent<TextMeshPro>().SetText(fCost.ToString());
-        }
-        else
-        {
-            visualNodeTransform.Find("gCostText").GetComponent<TextMeshPro>().SetText("");
-            visualNodeTransform.Find("hCostText").GetComponent<TextMeshPro>().SetText("");
-            visualNodeTransform.Find("fCostText").GetComponent<TextMeshPro>().SetText("");
-        }
     }
 
     private class GridSnapshotAction
