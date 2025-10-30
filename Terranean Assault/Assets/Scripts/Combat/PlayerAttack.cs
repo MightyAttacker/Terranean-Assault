@@ -24,7 +24,6 @@ public class PlayerAttack : MonoBehaviour
     {
         if (hotbar == null)
     {
-        Debug.LogWarning("Hotbar reference missing on PlayerAttack!");
         return false;
     }
         
