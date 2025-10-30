@@ -19,10 +19,8 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
     public int LastMovedPhase => lastMovedPhase;
     [SerializeField] private float maxMoveDistance = 6f;
     [SerializeField] private float objectiveControl = 1;
-    [SerializeField] private float health = 2;
     [SerializeField] private float meleeDamage = 2;
     public float MeleeDamage => meleeDamage; //Karl Martinez-Benham, access private float
-    [SerializeField] private float rangedDamage = 1;
     public int width = 1;
     public int height = 1;
 

@@ -5574,9 +5574,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterPathfindingMovementHandler
   maxMoveDistance: 12
   objectiveControl: 1
-  health: 2
   meleeDamage: 2
-  rangedDamage: 1
   width: 1
   height: 1
 --- !u!50 &993451497
