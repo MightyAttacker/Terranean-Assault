@@ -2766,7 +2766,6 @@ GameObject:
   - component: {fileID: 504038268}
   - component: {fileID: 504038267}
   - component: {fileID: 504038271}
-  - component: {fileID: 504038272}
   m_Layer: 5
   m_Name: HotbarManager
   m_TagString: LegionsImperius
@@ -2909,6 +2908,8 @@ MonoBehaviour:
   - {fileID: 134013455}
   attackerTag: LegionsImperius
   defenderTag: MechanisedCommonwealth
+  attackerFightPhases: 03000000070000000b0000000f00000013000000
+  defenderFightPhases: 05000000090000000d0000001100000015000000
   errorDisplay: {fileID: 77888447}
   attackerRegionMin: {x: 0, y: 0}
   attackerRegionMax: {x: 12, y: 30}
@@ -2922,87 +2923,6 @@ MonoBehaviour:
   objective3RegionMax: {x: 29, y: 25}
   objective4RegionMin: {x: 15, y: 5}
   objective4RegionMax: {x: 19, y: 9}
-  spawnedUnits: []
-  attackerScoreTexts: []
-  defenderScoreTexts: []
-  toggleModeButton: {fileID: 233264670}
-  toggleObjectives: {fileID: 1693553212}
-  toggleScoreboard: {fileID: 186597567}
-  toggleDZ: {fileID: 297881329}
-  Exit: {fileID: 737050690}
-  PhaseTracker: {fileID: 759900635}
-  hotbarPanel: {fileID: 1312926654}
-  Exits: {fileID: 737050688}
-  AttackerDZ: {fileID: 2134860292}
-  DefenderDZ: {fileID: 2122192622}
-  Objective1: {fileID: 607407902}
-  Objective2: {fileID: 1142382579}
-  Objective3: {fileID: 522216234}
-  Objective4: {fileID: 1218806378}
-  ScoreboardObject: {fileID: 1434027091}
-  WinBanner: {fileID: 57505051}
-  EndScreen: {fileID: 1929008962}
-  LeftClick: {fileID: 1052413584}
-  RightClick: {fileID: 587824346}
-  phase: 0
-  Blank: {fileID: 0}
-  Engineer: {fileID: 1660666949322602796, guid: dd786d91829838646920c2719bca7674,
-    type: 3}
-  HeavyWeapons: {fileID: 578177851848316868, guid: dbaca4215ee5b824e9f583859f3f700f,
-    type: 3}
-  Medic: {fileID: 7194117310325499366, guid: 445784c1e064b1d49b797f91e4943554, type: 3}
-  Scout: {fileID: 1594536101128610490, guid: cddebf7dcde45ff49ad8fbe50ebecc04, type: 3}
-  Sniper: {fileID: 3706223228574245351, guid: 180022e1dc16ba84b9bfed12d32083b9, type: 3}
-  Soldier: {fileID: 6449158475792463234, guid: 77e664745a25b4e46bc4875d5e6155dd, type: 3}
-  Tank: {fileID: 8590168648900800359, guid: 95de4ad8920983948ba7debffd39b0be, type: 3}
-  ATV: {fileID: 8265856921231167321, guid: a2293d3324debc046b4bfe4d5621dff0, type: 3}
-  AssaultLeader: {fileID: 3771261067173815011, guid: b5780932568c7604e823829364b91728,
-    type: 3}
-  AssaultSargent: {fileID: 5827185757938238746, guid: aaac47209b4990f4ba3f32094c8f4edd,
-    type: 3}
-  AssaultSquad: {fileID: 8105415175480189622, guid: f1bdd4d97d55d734eb7947eda8b86a35,
-    type: 3}
-  AssaultTransport: {fileID: 5786859918405285311, guid: c17e46eab2ebc4344ba7fddec98337dc,
-    type: 3}
-  ReconTeam: {fileID: 8932119866464704457, guid: 926744ba0dc914746b4794157f51b172,
-    type: 3}
-  JumpPackBattlesuit: {fileID: 3579240205095628643, guid: 61ef42dfaddd67c4380737d58615cd31,
-    type: 3}
-  HeavyBattlesuit: {fileID: 408206193702891813, guid: 839b557fd829ab446a94c30c19afefa2,
-    type: 3}
-  EliteBattlesuit: {fileID: 6870108145094802410, guid: 8e296d51fc42b6d4d896fade751935e2,
-    type: 3}
---- !u!114 &504038272
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 504038264}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 401547c2d1fe5704385776894fb57ace, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Hotbar
-  Images: []
-  WallTilemap: {fileID: 873511845}
-  itemPrefabs: []
-  slots: []
-  attackerTag: LegionsImperius
-  defenderTag: MechanisedCommonwealth
-  errorDisplay: {fileID: 77888447}
-  attackerRegionMin: {x: -10, y: -5}
-  attackerRegionMax: {x: -2, y: 5}
-  defenderRegionMin: {x: 2, y: -5}
-  defenderRegionMax: {x: 10, y: 5}
-  objective1RegionMin: {x: 2, y: -5}
-  objective1RegionMax: {x: 10, y: 5}
-  objective2RegionMin: {x: 2, y: -5}
-  objective2RegionMax: {x: 10, y: 5}
-  objective3RegionMin: {x: 2, y: -5}
-  objective3RegionMax: {x: 10, y: 5}
-  objective4RegionMin: {x: 2, y: -5}
-  objective4RegionMax: {x: 10, y: 5}
   spawnedUnits: []
   attackerScoreTexts: []
   defenderScoreTexts: []
