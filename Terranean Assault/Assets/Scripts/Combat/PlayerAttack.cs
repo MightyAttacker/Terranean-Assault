@@ -12,21 +12,21 @@ public class PlayerAttack : MonoBehaviour
     int[] attackerFightPhases = { 2, 6, 10, 14, 18 };
     int[] defenderFightPhases = { 4, 8, 12, 16, 20 };
 
-    void Update()
-    {
-        if (Input.GetMouseButtonDown(1) && IsCorrectPhase())
-        {
-            Attack();
-        }
-    }
+    // void Update()
+    // {
+    //     if (Input.GetMouseButtonDown(1) && IsCorrectPhase())
+    //     {
+    //         Attack();
+    //     }
+    // }
 
-    bool IsCorrectPhase()
-    {
-        if (isAttacker)
-            return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
-        else
-            return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
-    }
+    // bool IsCorrectPhase()
+    // {
+    //     if (isAttacker)
+    //         return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
+    //     else
+    //         return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
+    // }
 
     void Attack()
     {
