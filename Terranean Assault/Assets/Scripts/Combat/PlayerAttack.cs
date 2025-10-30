@@ -9,8 +9,8 @@ public class PlayerAttack : MonoBehaviour
     public bool isAttacker = true;
 
     // Phase arrays
-    int[] attackerFightPhases = { 2, 6, 10, 14, 18 };
-    int[] defenderFightPhases = { 4, 8, 12, 16, 20 };
+    int[] attackerFightPhases = { 3, 7, 11, 15, 19 };
+    int[] defenderFightPhases = { 5, 9, 13, 17, 21 };
 
     void Update()
     {
@@ -22,6 +22,11 @@ public class PlayerAttack : MonoBehaviour
 
     bool IsCorrectPhase()
     {
+        if (hotbar == null)
+    {
+        return false;
+    }
+        
         if (isAttacker)
             return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
         else

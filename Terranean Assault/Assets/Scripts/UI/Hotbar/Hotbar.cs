@@ -110,7 +110,6 @@ public class Hotbar : MonoBehaviour
     private int DZToggle = 0;
     private int selectedSlot = -1;
     public int phase = 0;
-    private int Score = 0;
     private int TotalScoreAttacker = 0;
     private int TotalScoreDefender = 0;
 
@@ -1038,8 +1037,6 @@ public class Hotbar : MonoBehaviour
                            "Contested";
 
             objectiveOwners[key] = owner;
-
-            Debug.Log($"{key}: {attackerTag} = {atk}, {defenderTag} = {def} → {owner}");
         }
         UpdateObjectiveColors();
     }
