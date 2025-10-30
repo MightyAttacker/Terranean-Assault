@@ -186,8 +186,8 @@ public class Testing : MonoBehaviour
     if (clickedCharacter == null) return;
 
     // Only allow selecting units on your turn
-    bool isAttackerTurn = hotbar.phase % 4 == 1 || hotbar.phase % 4 == 2; // attacker's movement + fight
-    bool isDefenderTurn = hotbar.phase % 4 == 3 || hotbar.phase % 4 == 0; // defender's movement + fight
+    bool isAttackerTurn = hotbar.phase % 4 == 3 || hotbar.phase % 4 == 2; // attacker's movement + fight
+    bool isDefenderTurn = hotbar.phase % 4 == 1 || hotbar.phase % 4 == 0; // defender's movement + fight
 
     bool canSelect =
         (isAttackerTurn && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
