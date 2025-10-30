@@ -169,27 +169,31 @@ public class Testing : MonoBehaviour
         selectedCharacter = clickedCharacter;
         HighlightPhaseRange(selectedCharacter, phaseType);
 
-        // Create ghost
-        if (movementGhost != null)
+        // Only create movement ghost during move phases
+        if (phaseType == PhaseType.AttackerMove || phaseType == PhaseType.DefenderMove)
         {
-            Destroy(movementGhost);
-            movementGhost = null;
+            if (movementGhost != null)
+            {
+                Destroy(movementGhost);
+                movementGhost = null;
+            }
+
+            movementGhost = Instantiate(selectedCharacter.gameObject);
+
+            foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
+                collider.enabled = false;
+
+            foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
+                script.enabled = false;
+
+            foreach (var renderer in movementGhost.GetComponentsInChildren<SpriteRenderer>())
+            {
+                Color c = renderer.color;
+                c.a = 0.5f;
+                renderer.color = c;
+            }
         }
 
-        movementGhost = Instantiate(selectedCharacter.gameObject);
-
-        foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
-            collider.enabled = false;
-
-        foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
-            script.enabled = false;
-
-        foreach (var renderer in movementGhost.GetComponentsInChildren<SpriteRenderer>())
-        {
-            Color c = renderer.color;
-            c.a = 0.5f;
-            renderer.color = c;
-        }
 
         Debug.Log($"Selected character: {selectedCharacter.name}");
     }
@@ -409,17 +413,41 @@ public class Testing : MonoBehaviour
     {
         List<PathNode> attackNodes = new();
         Grid<PathNode> grid = pathfinding.GetGrid();
+        bool[,] visited = new bool[grid.GetWidth(), grid.GetHeight()];
 
-        for (int x = startX - range; x <= startX + range; x++)
+        Queue<(int x, int y, int distance)> queue = new();
+        queue.Enqueue((startX, startY, 0));
+        visited[startX, startY] = true;
+
+        while (queue.Count > 0)
         {
-            for (int y = startY - range; y <= startY + range; y++)
+            var (x, y, dist) = queue.Dequeue();
+
+            if (dist > 0) // skip starting node
             {
-                if (IsWithinGridBounds(x, y))
-                {
-                    PathNode node = grid.GetGridObject(x, y);
-                    if (node.isWalkable && (x != startX || y != startY))
-                        attackNodes.Add(node);
-                }
+                PathNode node = grid.GetGridObject(x, y);
+                if (node != null)
+                    attackNodes.Add(node);
+            }
+
+            if (dist >= range)
+                continue;
+
+            foreach (var (nx, ny) in new (int, int)[] { (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1) })
+            {
+                if (!IsWithinGridBounds(nx, ny)) continue;
+                if (visited[nx, ny]) continue;
+
+                PathNode neighbor = grid.GetGridObject(nx, ny);
+                if (neighbor == null) continue;
+
+                visited[nx, ny] = true;
+
+                // Stop propagation through walls
+                if (!neighbor.isWalkable)
+                    continue;
+
+                queue.Enqueue((nx, ny, dist + 1));
             }
         }
 

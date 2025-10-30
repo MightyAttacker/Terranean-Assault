@@ -4,6 +4,7 @@ using System.Collections;
 
 public class ErrorDisplay : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     [Header("UI References")]
     public TMP_Text messageText;
     public CanvasGroup canvasGroup;

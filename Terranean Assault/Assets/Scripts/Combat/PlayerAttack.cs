@@ -19,7 +19,7 @@ public class PlayerAttack : MonoBehaviour
     [Tooltip("Enable to visualize the attack range when clicking.")]
     public bool showAttackRangeGizmo = true;
 
-    // ✅ Phase arrays (for fight phases only)
+    // Phase arrays (for fight phases only)
     private readonly int[] attackerFightPhases = { 3, 7, 11, 15, 19 };
     private readonly int[] defenderFightPhases = { 5, 9, 13, 17, 21 };
 
@@ -27,23 +27,32 @@ public class PlayerAttack : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(1)) // Right-click
         {
-            if (IsCorrectPhase())
+            if (!IsCorrectPhase()) return;
+
+            // Raycast to find clicked enemy
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorld.z = 0f;
+
+            RaycastHit2D hit = Physics2D.Raycast(mouseWorld, Vector2.zero);
+            if (hit.collider != null)
             {
-                Attack();
-            }
-            else
-            {
-                Debug.Log("❌ Not the correct phase to attack!");
+                GameObject target = hit.collider.gameObject;
+
+                // Make sure the target has UnitHealth
+                if (target.TryGetComponent<UnitHealth>(out _))
+                {
+                    Attack(target); // Call new method
+                }
             }
         }
     }
 
-    // ✅ Checks whether it's currently a valid attack phase
+
+    // Checks whether it's currently a valid attack phase
     private bool IsCorrectPhase()
     {
         if (hotbar == null)
         {
-            Debug.LogWarning("⚠️ Hotbar reference missing on PlayerAttack!");
             return false;
         }
 
@@ -53,32 +62,23 @@ public class PlayerAttack : MonoBehaviour
             return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
     }
 
-    // ✅ Performs melee attack
-    private void Attack()
+    // Performs melee attack
+    public void Attack(GameObject target)
     {
         if (!TryGetComponent<CharacterPathfindingMovementHandler>(out var movementHandler))
             return;
 
+        // Make sure the target is an enemy
+        bool isEnemy = target.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag);
+        if (!isEnemy) return;
+
         int damage = Mathf.RoundToInt(movementHandler.MeleeDamage);
 
-        // Find all colliders in attack range
-        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, attackRange, enemyLayer);
-        HashSet<GameObject> hitObjects = new HashSet<GameObject>();
-
-        foreach (Collider2D col in hitColliders)
+        if (target.TryGetComponent<UnitHealth>(out UnitHealth health))
         {
-            GameObject target = col.gameObject;
-            if (hitObjects.Contains(target)) continue;
-
-            bool isEnemy = target.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag);
-            if (!isEnemy) continue;
-
-            if (target.TryGetComponent<UnitHealth>(out UnitHealth health))
-            {
-                health.TakeDamage(damage);
-                Debug.Log($"🗡️ {name} hit {target.name} for {damage} damage");
-                hitObjects.Add(target);
-            }
+            health.TakeDamage(damage);
+            Debug.Log($"🗡️ {name} hit {target.name} for {damage} damage");
         }
     }
+
 }

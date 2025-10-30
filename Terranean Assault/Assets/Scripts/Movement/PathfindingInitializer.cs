@@ -1,7 +1,7 @@
 using UnityEngine;
-// Put this on a GameObject early in the scene (like an empty "GameManager" object)
 public class PathfindingInitializer : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     public int width = 44;
     public int height = 30;
 

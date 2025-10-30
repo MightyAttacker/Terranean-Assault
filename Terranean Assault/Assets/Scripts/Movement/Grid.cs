@@ -5,6 +5,7 @@ using UnityEngine;
 using CodeMonkey.Utils;
 
 public class Grid<TGridObject> {
+    //Author - Lachlan Klenk
 
     public event EventHandler<OnGridObjectChangedEventArgs> OnGridObjectChanged;
     public class OnGridObjectChangedEventArgs : EventArgs {

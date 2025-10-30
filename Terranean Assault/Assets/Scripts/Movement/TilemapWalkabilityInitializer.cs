@@ -3,6 +3,7 @@ using UnityEngine.Tilemaps;
 
 public class TilemapWalkabilityInitializer : MonoBehaviour
 {
+    //Author - Lachlan Klenk
     public Tilemap wallTilemap;
 
     private void Start()
