@@ -243,9 +243,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterPathfindingMovementHandler
   maxMoveDistance: 14
   objectiveControl: 4
-  health: 2
   meleeDamage: 2
-  rangedDamage: 1
   width: 2
   height: 2
 --- !u!61 &287384129842906456
@@ -325,5 +323,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   hotbar: {fileID: 0}
-  attackRange: 1
+  attackRange: 12
   isAttacker: 1
+  showAttackRangeGizmo: 1

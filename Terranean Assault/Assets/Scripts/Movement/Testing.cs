@@ -5,7 +5,7 @@ using CodeMonkey.Utils;
 
 public class Testing : MonoBehaviour
 {
-    //Author - Lachlan Klenk
+    // Author - Lachlan Klenk
     [SerializeField] private PathfindingDebugStepVisual pathfindingDebugStepVisual;
     [SerializeField] private PathfindingVisual pathfindingVisual;
     [SerializeField] private Hotbar hotbar; // Reference Hotbar
@@ -15,14 +15,11 @@ public class Testing : MonoBehaviour
     private Pathfinding pathfinding;
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
 
-    int[] attackerMovementPhases = { 1, 5, 9, 13, 17 };
-    int[] defenderMovementPhases = { 3, 7, 11, 15, 19 };
-
-    int[] attackerFightPhases = { 2, 6, 10, 14, 18 };
-    int[] defenderFightPhases = { 4, 8, 12, 16, 20 };
-
     public ErrorDisplay errorDisplay;
     private GameObject movementGhost;
+
+    // Phase categories
+    private enum PhaseType { None, AttackerMove, DefenderMove, AttackerFight, DefenderFight }
 
     private void Start()
     {
@@ -39,7 +36,6 @@ public class Testing : MonoBehaviour
         pathfindingVisual.SetGrid(pathfinding.GetGrid());
 
         UpdateCharacterList();
-
         selectedCharacter = null;
 
         MarkWallsUnwalkable();
@@ -61,19 +57,17 @@ public class Testing : MonoBehaviour
 
             if (selectedCharacter != null && !IsClickOnCharacter(mouseWorld))
                 TryMoveSelectedCharacter(mouseWorld);
-
         }
 
-        if (Input.GetMouseButtonDown(1)) // Right-click
+        if (Input.GetMouseButtonDown(1)) // Right-click undo
         {
             TryUndoMove(mouseWorld);
         }
 
+        // Update movement ghost visual
         if (selectedCharacter != null && movementGhost != null)
         {
             mouseWorld.z = 0f;
-
-            // Snap to grid
             int footprintWidth = selectedCharacter.width;
             int footprintHeight = selectedCharacter.height;
 
@@ -88,7 +82,7 @@ public class Testing : MonoBehaviour
 
             movementGhost.transform.position = ghostPos;
 
-            // Overlapping units
+            // Check if placement valid
             bool invalid = false;
             for (int dx = 0; dx < footprintWidth; dx++)
             {
@@ -109,12 +103,11 @@ public class Testing : MonoBehaviour
                 if (invalid) break;
             }
 
-
-            // Walls (optional if you want)
+            // Walls
             Vector3Int wallCell = wallTilemap.WorldToCell(ghostPos);
             if (wallTilemap.GetTile(wallCell) != null) invalid = true;
 
-            // Change ghost color based on validity
+            // Ghost color update
             var renderers = movementGhost.GetComponentsInChildren<SpriteRenderer>();
             foreach (var r in renderers)
             {
@@ -123,7 +116,185 @@ public class Testing : MonoBehaviour
                 r.color = c;
             }
         }
+    }
 
+    // ------------------------
+    // Phase & Selection Logic
+    // ------------------------
+
+    private PhaseType GetCurrentPhaseType()
+    {
+        int phase = hotbar.phase;
+
+        if (phase == 2 || phase == 6 || phase == 10 || phase == 14 || phase == 18)
+            return PhaseType.AttackerMove;
+        if (phase == 4 || phase == 8 || phase == 12 || phase == 16 || phase == 20)
+            return PhaseType.DefenderMove;
+        if (phase == 3 || phase == 7 || phase == 11 || phase == 15 || phase == 19)
+            return PhaseType.AttackerFight;
+        if (phase == 5 || phase == 9 || phase == 13 || phase == 17 || phase == 21)
+            return PhaseType.DefenderFight;
+
+        return PhaseType.None;
+    }
+
+    private void TrySelectCharacter(Vector3 mouseWorldPosition)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+        if (hit.collider == null) return;
+
+        var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
+        if (clickedCharacter == null) return;
+
+        PhaseType phaseType = GetCurrentPhaseType();
+        bool canSelect = false;
+
+        if (phaseType == PhaseType.AttackerMove || phaseType == PhaseType.AttackerFight)
+            canSelect = clickedCharacter.CompareTag(hotbar.attackerTag);
+        else if (phaseType == PhaseType.DefenderMove || phaseType == PhaseType.DefenderFight)
+            canSelect = clickedCharacter.CompareTag(hotbar.defenderTag);
+
+        if (!canSelect)
+        {
+            errorDisplay.ShowError("Cannot select this unit in the current phase.");
+            return;
+        }
+
+        if (clickedCharacter.LastMovedPhase == hotbar.phase)
+        {
+            errorDisplay.ShowError($"{clickedCharacter.name} has already acted this phase.");
+            return;
+        }
+
+        selectedCharacter = clickedCharacter;
+        HighlightPhaseRange(selectedCharacter, phaseType);
+
+        // Create ghost
+        if (movementGhost != null)
+        {
+            Destroy(movementGhost);
+            movementGhost = null;
+        }
+
+        movementGhost = Instantiate(selectedCharacter.gameObject);
+
+        foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
+            collider.enabled = false;
+
+        foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
+            script.enabled = false;
+
+        foreach (var renderer in movementGhost.GetComponentsInChildren<SpriteRenderer>())
+        {
+            Color c = renderer.color;
+            c.a = 0.5f;
+            renderer.color = c;
+        }
+
+        Debug.Log($"Selected character: {selectedCharacter.name}");
+    }
+
+    private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
+        var clickedChar = hit.collider?.GetComponent<CharacterPathfindingMovementHandler>();
+        return clickedChar != null && characters.Contains(clickedChar);
+    }
+
+    // ------------------------
+    // Movement Logic
+    // ------------------------
+
+    private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
+    {
+        if (selectedCharacter == null) return;
+
+        PhaseType phaseType = GetCurrentPhaseType();
+        if (phaseType != PhaseType.AttackerMove && phaseType != PhaseType.DefenderMove)
+        {
+            errorDisplay.ShowError("Cannot move during this phase!");
+            return;
+        }
+
+        var grid = pathfinding.GetGrid();
+        grid.GetXY(mouseWorldPosition, out int x, out int y);
+
+        int footprintWidth = selectedCharacter.width;
+        int footprintHeight = selectedCharacter.height;
+
+        int baseX = x;
+        int baseY = y;
+
+        // Validate placement
+        for (int dx = 0; dx < footprintWidth; dx++)
+        {
+            for (int dy = 0; dy < footprintHeight; dy++)
+            {
+                int checkX = baseX + dx;
+                int checkY = baseY + dy;
+
+                if (!IsWithinGridBounds(checkX, checkY))
+                {
+                    errorDisplay.ShowError("Cannot move unit here — out of bounds!");
+                    return;
+                }
+
+                Vector3 cellWorldPos = new Vector3(checkX + 0.5f, checkY + 0.5f, 0f);
+                Vector3Int wallCell = wallTilemap.WorldToCell(cellWorldPos);
+                if (wallTilemap.GetTile(wallCell) != null)
+                {
+                    errorDisplay.ShowError("Cannot move unit here — wall blocking path!");
+                    return;
+                }
+
+                Collider2D hit = Physics2D.OverlapCircle(cellWorldPos, 0.4f);
+                if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
+                {
+                    errorDisplay.ShowError("Cannot move unit here — space occupied!");
+                    return;
+                }
+            }
+        }
+
+        Vector3 charWorldPos = selectedCharacter.transform.position;
+        grid.GetXY(charWorldPos, out int startX, out int startY);
+
+        List<PathNode> path = pathfinding.FindPath(startX, startY, baseX, baseY);
+        if (path == null) return;
+
+        int totalCost = 0;
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            PathNode from = path[i];
+            PathNode to = path[i + 1];
+            totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14;
+        }
+
+        int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / grid.GetCellSize()) * 10;
+        if (totalCost > maxMoveCost)
+        {
+            errorDisplay.ShowError("Destination too far!");
+            return;
+        }
+
+        pathfindingVisual.ClearHighlights();
+
+        Vector3 targetPosition = new Vector3(
+            baseX + (footprintWidth * 0.5f),
+            baseY + (footprintHeight * 0.5f),
+            0f
+        );
+
+        if (selectedCharacter.TryMove(targetPosition, hotbar.phase))
+        {
+            selectedCharacter = null;
+        }
+
+        if (movementGhost != null)
+        {
+            Destroy(movementGhost);
+            movementGhost = null;
+        }
     }
 
     private void TryUndoMove(Vector3 mouseWorldPosition)
@@ -135,17 +306,129 @@ public class Testing : MonoBehaviour
             var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
             if (clickedCharacter != null && characters.Contains(clickedCharacter))
             {
-                // Only undo if this unit moved in the current phase
                 if (clickedCharacter.LastMovedPhase == hotbar.phase)
                 {
-                    clickedCharacter.ResetMovementPhase(true); // restore position
-                    Debug.Log($"{clickedCharacter.name}'s move has been undone for phase {hotbar.phase}.");
+                    clickedCharacter.ResetMovementPhase(true);
+                    Debug.Log($"{clickedCharacter.name}'s move undone for phase {hotbar.phase}.");
                 }
             }
         }
     }
 
+    // ------------------------
+    // Highlighting System
+    // ------------------------
 
+    private void HighlightPhaseRange(CharacterPathfindingMovementHandler character, PhaseType phaseType)
+    {
+        if (character == null) return;
+
+        pathfindingVisual.ClearHighlights();
+        Vector3 charWorldPos = character.transform.position;
+        pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
+
+        Color highlightColor;
+
+        if (phaseType == PhaseType.AttackerMove || phaseType == PhaseType.DefenderMove)
+        {
+            highlightColor = Color.blue;
+            int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
+            List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
+            pathfindingVisual.HighlightNodes(reachableNodes, highlightColor);
+        }
+        else if (phaseType == PhaseType.AttackerFight || phaseType == PhaseType.DefenderFight)
+        {
+            highlightColor = Color.red;
+            float attackRangeWorld = 1f;
+
+            // Get the attack range from the PlayerAttack component (set during initialization)
+            if (character.TryGetComponent<PlayerAttack>(out var attackComponent))
+            {
+                attackRangeWorld = attackComponent.attackRange;
+            }
+
+            // Convert world-space attack range to grid-space
+            int attackRangeTiles = Mathf.RoundToInt(attackRangeWorld / pathfinding.GetGrid().GetCellSize());
+            attackRangeTiles = Mathf.Max(1, attackRangeTiles); // never less than 1
+
+            // Get attack nodes using the proper tile range
+            List<PathNode> attackNodes = GetAttackRangeNodes(charX, charY, attackRangeTiles);
+
+            pathfindingVisual.HighlightNodes(attackNodes, highlightColor);
+        }
+    }
+
+    private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
+    {
+        List<PathNode> reachableNodes = new();
+        Grid<PathNode> grid = pathfinding.GetGrid();
+
+        int width = grid.GetWidth();
+        int height = grid.GetHeight();
+
+        bool[,] visited = new bool[width, height];
+        int[,] costSoFar = new int[width, height];
+
+        Queue<PathNode> queue = new();
+
+        PathNode startNode = grid.GetGridObject(startX, startY);
+        visited[startX, startY] = true;
+        costSoFar[startX, startY] = 0;
+
+        queue.Enqueue(startNode);
+        reachableNodes.Add(startNode);
+
+        while (queue.Count > 0)
+        {
+            PathNode current = queue.Dequeue();
+
+            foreach (PathNode neighbor in pathfinding.GetNeighbourList(current))
+            {
+                if (!neighbor.isWalkable) continue;
+
+                int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14;
+                int newCost = costSoFar[current.x, current.y] + movementCost;
+
+                if (newCost <= maxMoveCost)
+                {
+                    if (!visited[neighbor.x, neighbor.y])
+                    {
+                        visited[neighbor.x, neighbor.y] = true;
+                        costSoFar[neighbor.x, neighbor.y] = newCost;
+                        queue.Enqueue(neighbor);
+                        reachableNodes.Add(neighbor);
+                    }
+                }
+            }
+        }
+
+        return reachableNodes;
+    }
+
+    private List<PathNode> GetAttackRangeNodes(int startX, int startY, int range)
+    {
+        List<PathNode> attackNodes = new();
+        Grid<PathNode> grid = pathfinding.GetGrid();
+
+        for (int x = startX - range; x <= startX + range; x++)
+        {
+            for (int y = startY - range; y <= startY + range; y++)
+            {
+                if (IsWithinGridBounds(x, y))
+                {
+                    PathNode node = grid.GetGridObject(x, y);
+                    if (node.isWalkable && (x != startX || y != startY))
+                        attackNodes.Add(node);
+                }
+            }
+        }
+
+        return attackNodes;
+    }
+
+    // ------------------------
+    // Utility
+    // ------------------------
 
     private void UpdateCharacterList()
     {
@@ -177,232 +460,8 @@ public class Testing : MonoBehaviour
         Debug.Log("Marked wall tiles as unwalkable.");
     }
 
-    private void TrySelectCharacter(Vector3 mouseWorldPosition)
-{
-    RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
-    if (hit.collider == null) return;
-
-    var clickedCharacter = hit.collider.GetComponent<CharacterPathfindingMovementHandler>();
-    if (clickedCharacter == null) return;
-
-    // Only allow selecting units on your turn
-    bool isAttackerTurn = hotbar.phase % 4 == 3 || hotbar.phase % 4 == 2; // attacker's movement + fight
-    bool isDefenderTurn = hotbar.phase % 4 == 1 || hotbar.phase % 4 == 0; // defender's movement + fight
-
-    bool canSelect =
-        (isAttackerTurn && clickedCharacter.CompareTag(hotbar.attackerTag)) ||
-        (isDefenderTurn && clickedCharacter.CompareTag(hotbar.defenderTag));
-
-    if (!canSelect)
+    private bool IsWithinGridBounds(int x, int y)
     {
-        errorDisplay.ShowError("Cannot select this unit in the current phase.");
-        return;
+        return x >= 0 && y >= 0 && x < pathfinding.GetGrid().GetWidth() && y < pathfinding.GetGrid().GetHeight();
     }
-
-    if (clickedCharacter.LastMovedPhase == hotbar.phase)
-    {
-        errorDisplay.ShowError($"{clickedCharacter.name} has already acted in this phase.");
-        return;
-    }
-
-    selectedCharacter = clickedCharacter;
-    HighlightMovementRange(selectedCharacter);
-
-    // Create movement ghost
-    if (movementGhost != null)
-    {
-        Destroy(movementGhost);
-        movementGhost = null;
-    }
-
-    movementGhost = Instantiate(selectedCharacter.gameObject);
-
-    foreach (var collider in movementGhost.GetComponentsInChildren<Collider2D>())
-        collider.enabled = false;
-
-    foreach (var script in movementGhost.GetComponents<MonoBehaviour>())
-        script.enabled = false;
-
-    foreach (var renderer in movementGhost.GetComponentsInChildren<SpriteRenderer>())
-    {
-        Color c = renderer.color;
-        c.a = 0.5f;
-        renderer.color = c;
-    }
-    Debug.Log($"Selected character: {selectedCharacter.name}");
-}
-
-
-private bool IsClickOnCharacter(Vector3 mouseWorldPosition)
-{
-    RaycastHit2D hit = Physics2D.Raycast(mouseWorldPosition, Vector2.zero);
-    var clickedChar = hit.collider?.GetComponent<CharacterPathfindingMovementHandler>();
-    return clickedChar != null && characters.Contains(clickedChar);
-}
-
-private void TryMoveSelectedCharacter(Vector3 mouseWorldPosition)
-{
-    if (selectedCharacter == null) return;
-
-    var grid = pathfinding.GetGrid();
-    grid.GetXY(mouseWorldPosition, out int x, out int y);
-
-    // --- Footprint info ---
-    int footprintWidth = selectedCharacter.width;
-    int footprintHeight = selectedCharacter.height;
-
-    // Snap mouse click to bottom-left of footprint
-    int baseX = x;
-    int baseY = y;
-
-    // Check if all cells the unit would occupy are valid (in bounds, not walls, not occupied)
-    for (int dx = 0; dx < footprintWidth; dx++)
-    {
-        for (int dy = 0; dy < footprintHeight; dy++)
-        {
-            int checkX = baseX + dx;
-            int checkY = baseY + dy;
-
-            // 1️⃣ Out of bounds
-            if (!IsWithinGridBounds(checkX, checkY))
-            {
-                errorDisplay.ShowError("Cannot move unit here — destination is out of bounds!");
-                return;
-            }
-
-            // 2️⃣ Wall
-            Vector3 cellWorldPos = new Vector3(checkX + 0.5f, checkY + 0.5f, 0f);
-            Vector3Int wallCell = wallTilemap.WorldToCell(cellWorldPos);
-            if (wallTilemap.GetTile(wallCell) != null)
-            {
-                errorDisplay.ShowError("Cannot move unit here — a wall is blocking this space!");
-                return;
-            }
-
-            // 3️⃣ Other units
-            Collider2D hit = Physics2D.OverlapCircle(cellWorldPos, 0.4f);
-            if (hit != null && (hit.CompareTag(hotbar.attackerTag) || hit.CompareTag(hotbar.defenderTag)))
-            {
-                errorDisplay.ShowError("Cannot move unit here — another unit is occupying this space!");
-                return;
-            }
-        }
-    }
-
-    Vector3 charWorldPos = selectedCharacter.transform.position;
-    grid.GetXY(charWorldPos, out int startX, out int startY);
-
-    List<PathNode> path = pathfinding.FindPath(startX, startY, baseX, baseY);
-    if (path == null) return;
-
-    int totalCost = 0;
-    for (int i = 0; i < path.Count - 1; i++)
-    {
-        PathNode from = path[i];
-        PathNode to = path[i + 1];
-        totalCost += (from.x == to.x || from.y == to.y) ? 10 : 14;
-    }
-
-    int maxMoveCost = Mathf.FloorToInt(selectedCharacter.GetMaxMoveDistance() / grid.GetCellSize()) * 10;
-    if (totalCost > maxMoveCost)
-    {
-        errorDisplay.ShowError("Destination too far based on movement cost");
-        return;
-    }
-
-    pathfindingVisual.ClearHighlights();
-
-    // Calculate center position of the footprint
-    Vector3 targetPosition = new Vector3(
-        baseX + (footprintWidth * 0.5f),
-        baseY + (footprintHeight * 0.5f),
-        0f
-    );
-
-    // Move unit if valid
-    if (selectedCharacter.TryMove(targetPosition, hotbar.phase))
-    {
-        selectedCharacter = null;
-    }
-
-    // Destroy movement ghost
-    if (movementGhost != null)
-    {
-        Destroy(movementGhost);
-        movementGhost = null;
-    }
-}
-
-private void HighlightMovementRange(CharacterPathfindingMovementHandler character)
-{
-    if (character == null) return;
-
-    pathfindingVisual.ClearHighlights();
-
-    Vector3 charWorldPos = character.transform.position;
-    pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
-
-    int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
-    List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
-
-    pathfindingVisual.HighlightNodes(reachableNodes, Color.blue);
-}
-
-private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
-{
-    List<PathNode> reachableNodes = new();
-    Grid<PathNode> grid = pathfinding.GetGrid();
-
-    int width = grid.GetWidth();
-    int height = grid.GetHeight();
-
-    bool[,] visited = new bool[width, height];
-    int[,] costSoFar = new int[width, height];
-
-    Queue<PathNode> queue = new();
-
-    PathNode startNode = grid.GetGridObject(startX, startY);
-    visited[startX, startY] = true;
-    costSoFar[startX, startY] = 0;
-
-    queue.Enqueue(startNode);
-    reachableNodes.Add(startNode);
-
-    while (queue.Count > 0)
-    {
-        PathNode current = queue.Dequeue();
-
-        foreach (PathNode neighbor in pathfinding.GetNeighbourList(current))
-        {
-            if (!neighbor.isWalkable) continue;
-
-            int movementCost = (neighbor.x == current.x || neighbor.y == current.y) ? 10 : 14;
-            int newCost = costSoFar[current.x, current.y] + movementCost;
-
-            if (newCost <= maxMoveCost)
-            {
-                if (!visited[neighbor.x, neighbor.y])
-                {
-                    visited[neighbor.x, neighbor.y] = true;
-                    costSoFar[neighbor.x, neighbor.y] = newCost;
-                    queue.Enqueue(neighbor);
-                    reachableNodes.Add(neighbor);
-                }
-                else if (newCost < costSoFar[neighbor.x, neighbor.y])
-                {
-                    costSoFar[neighbor.x, neighbor.y] = newCost;
-                    queue.Enqueue(neighbor);
-                }
-            }
-        }
-    }
-
-    return reachableNodes;
-}
-
-private bool IsWithinGridBounds(int x, int y)
-{
-    return x >= 0 && y >= 0 && x < pathfinding.GetGrid().GetWidth() && y < pathfinding.GetGrid().GetHeight();
-}
-
 }
