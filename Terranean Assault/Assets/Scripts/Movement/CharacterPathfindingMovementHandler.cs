@@ -131,6 +131,10 @@ public class CharacterPathfindingMovementHandler : MonoBehaviour
         }
     }
 
+    public void MarkAsMoved(int phase)
+    {
+        lastMovedPhase = phase;
+    }
     public bool TryMove(Vector3 targetPosition, int currentPhase)
     {
         if (lastMovedPhase == currentPhase)

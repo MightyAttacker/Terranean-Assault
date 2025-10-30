@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 
 public class UIDragHandler : MonoBehaviour, IPointerDownHandler, IDragHandler
 {
+    //Author - Lachlan Klenk
     private Vector2 offset;
 
     public void OnPointerDown(PointerEventData eventData)

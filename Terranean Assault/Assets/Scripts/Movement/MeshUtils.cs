@@ -1,8 +1,9 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public static class MeshUtils {
+    //Author - Lachlan Klenk
     
     private static readonly Vector3 Vector3zero = Vector3.zero;
     private static readonly Vector3 Vector3one = Vector3.one;

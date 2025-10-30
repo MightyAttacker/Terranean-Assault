@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Pathfinding
 {
+    //Author - Lachlan Klenk
 
     private const int MOVE_STRAIGHT_COST = 10;
     private const int MOVE_DIAGONAL_COST = 14;

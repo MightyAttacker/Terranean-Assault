@@ -4,6 +4,7 @@ using TMPro; // Make sure you’re using TextMeshPro
 
 public class UIResizeHandler : MonoBehaviour, IPointerDownHandler, IDragHandler
 {
+    //Author - Lachlan Klenk
     public RectTransform targetToResize; // The Scoreboard panel
     public Vector2 minSize = new Vector2(200, 200);
     public Vector2 maxSize = new Vector2(2000, 2000);
