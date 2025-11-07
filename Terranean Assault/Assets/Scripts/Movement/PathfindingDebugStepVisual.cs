@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -37,6 +37,7 @@ public class PathfindingDebugStepVisual : MonoBehaviour
             {
                 Vector3 gridPosition = new Vector3(x, y) * grid.GetCellSize() + Vector3.one * grid.GetCellSize() * .5f;
                 Transform visualNode = CreateVisualNode(gridPosition);
+                visualNode.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
                 visualNodeArray[x, y] = visualNode;
                 visualNodeList.Add(visualNode);
             }
