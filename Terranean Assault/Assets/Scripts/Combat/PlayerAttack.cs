@@ -3,20 +3,15 @@ using System.Collections.Generic;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Attack Settings")]
-    [Tooltip("Which layer contains enemy units.")]
+   
     public LayerMask enemyLayer;
-
-    [Tooltip("Reference to the Hotbar for phase tracking.")]
+ 
     public Hotbar hotbar;
 
-    [Tooltip("Attack range in world units.")]
     public float attackRange = 1f;
 
-    [Tooltip("Set true if this unit belongs to the attacker team.")]
     public bool isAttacker = true;
-
-    [Tooltip("Enable to visualize the attack range when clicking.")]
+  
     public bool showAttackRangeGizmo = true;
 
     // Phase arrays (for fight phases only)
