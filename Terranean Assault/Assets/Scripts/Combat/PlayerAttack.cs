@@ -1,76 +1,73 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Attack Settings")]
-    [Tooltip("Which layer contains enemy units.")]
     public LayerMask enemyLayer;
+    public float CloseRange = 1f;
+    public float LongRange = 3f;
+    public AttackRangeVisual attackVisual;
 
-    [Tooltip("Reference to the Hotbar for phase tracking.")]
-    public Hotbar hotbar;
+    private int selectedAttackType = 0; // 0 = none, 1 = melee, 2 = long
+    private Testing testing;
 
-    [Tooltip("Attack range in world units.")]
-    public float attackRange = 1f;
+    public float attackRange => selectedAttackType switch
+    {
+        1 => CloseRange,
+        2 => LongRange,
+        _ => 0f
+    };
 
-    [Tooltip("Set true if this unit belongs to the attacker team.")]
-    public bool isAttacker = true;
-
-    [Tooltip("Enable to visualize the attack range when clicking.")]
-    public bool showAttackRangeGizmo = true;
-
-    // Phase arrays (for fight phases only)
-    private readonly int[] attackerFightPhases = { 3, 7, 11, 15, 19 };
-    private readonly int[] defenderFightPhases = { 5, 9, 13, 17, 21 };
+    private void Start()
+    {
+        attackVisual?.SetGrid(Pathfinding.Instance.GetGrid());
+        testing = FindObjectOfType<Testing>();
+    }
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(1)) // Right-click
-        {
-            if (!IsCorrectPhase()) return;
+        if (testing == null) return;
 
-            // Raycast to find clicked enemy
+        // Only show range for currently selected unit
+        bool isSelected = testing.selectedCharacter?.gameObject == gameObject;
+
+        if (!isSelected)
+        {
+            // Clear this unit's highlights only if it’s deselected
+            attackVisual?.ClearHighlights();
+            return;
+        }
+
+        // Select attack type
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            selectedAttackType = 1;
+            attackVisual?.ShowCloseRangeAttack(transform.position, Mathf.RoundToInt(CloseRange));
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            selectedAttackType = 2;
+            attackVisual?.ShowLongRangeAttack(transform.position, Mathf.RoundToInt(LongRange));
+        }
+
+        // Perform attack on right-click
+        if (selectedAttackType != 0 && Input.GetMouseButtonDown(1))
+        {
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouseWorld.z = 0f;
 
-            RaycastHit2D hit = Physics2D.Raycast(mouseWorld, Vector2.zero);
-            if (hit.collider != null)
+            RaycastHit2D hit = Physics2D.Raycast(mouseWorld, Vector2.zero, Mathf.Infinity, enemyLayer);
+            if (hit.collider != null && hit.collider.TryGetComponent<UnitHealth>(out _))
             {
-                GameObject target = hit.collider.gameObject;
-
-                // Make sure the target has UnitHealth
-                if (target.TryGetComponent<UnitHealth>(out _))
-                {
-                    Attack(target); // Call new method
-                }
+                Attack(hit.collider.gameObject);
+                attackVisual?.ClearHighlights();
+                selectedAttackType = 0;
             }
         }
     }
 
-
-    // Checks whether it's currently a valid attack phase
-    private bool IsCorrectPhase()
+    private void Attack(GameObject target)
     {
-        if (hotbar == null)
-        {
-            return false;
-        }
-
-        if (isAttacker)
-            return System.Array.Exists(attackerFightPhases, p => p == hotbar.phase);
-        else
-            return System.Array.Exists(defenderFightPhases, p => p == hotbar.phase);
-    }
-
-    // Performs melee attack
-    public void Attack(GameObject target)
-    {
-        if (!TryGetComponent<CharacterPathfindingMovementHandler>(out var movementHandler))
-            return;
-
-        // Make sure the target is an enemy
-        bool isEnemy = target.CompareTag(isAttacker ? hotbar.defenderTag : hotbar.attackerTag);
-        if (!isEnemy) return;
+        if (!TryGetComponent<CharacterPathfindingMovementHandler>(out var movementHandler)) return;
 
         int damage = Mathf.RoundToInt(movementHandler.MeleeDamage);
 
@@ -80,5 +77,4 @@ public class PlayerAttack : MonoBehaviour
             Debug.Log($"🗡️ {name} hit {target.name} for {damage} damage");
         }
     }
-
 }

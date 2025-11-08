@@ -10,8 +10,9 @@ public class Testing : MonoBehaviour
     [SerializeField] private PathfindingVisual pathfindingVisual;
     [SerializeField] private Hotbar hotbar; // Reference Hotbar
     [SerializeField] private Tilemap wallTilemap;
+    [SerializeField] private AttackRangeVisual attackVisual; //Karl
 
-    private CharacterPathfindingMovementHandler selectedCharacter;
+    public CharacterPathfindingMovementHandler selectedCharacter;
     private Pathfinding pathfinding;
     private List<CharacterPathfindingMovementHandler> characters = new List<CharacterPathfindingMovementHandler>();
 
@@ -34,11 +35,23 @@ public class Testing : MonoBehaviour
 
         pathfindingDebugStepVisual.Setup(pathfinding.GetGrid());
         pathfindingVisual.SetGrid(pathfinding.GetGrid());
+        attackVisual.SetGrid(pathfinding.GetGrid()); //Karl
 
         UpdateCharacterList();
         selectedCharacter = null;
 
         MarkWallsUnwalkable();
+
+        foreach (var unit in hotbar.spawnedUnits) //Karl
+        {
+            var pa = unit.GetComponent<PlayerAttack>();
+            if (pa != null)
+            {
+                pa.attackVisual = attackVisual;
+                pa.attackVisual.SetGrid(pathfinding.GetGrid());
+            }
+        }
+
     }
 
     private void Update()
@@ -327,40 +340,44 @@ public class Testing : MonoBehaviour
     {
         if (character == null) return;
 
+        // Always clear previous movement highlights
         pathfindingVisual.ClearHighlights();
-        Vector3 charWorldPos = character.transform.position;
-        pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
 
-        Color highlightColor;
-
+        // ------------------------
+        // MOVE PHASES
+        // ------------------------
         if (phaseType == PhaseType.AttackerMove || phaseType == PhaseType.DefenderMove)
         {
-            highlightColor = Color.blue;
+            Vector3 charWorldPos = character.transform.position;
+            pathfinding.GetGrid().GetXY(charWorldPos, out int charX, out int charY);
+
             int maxMoveCost = Mathf.FloorToInt(character.GetMaxMoveDistance() / pathfinding.GetGrid().GetCellSize()) * 10;
             List<PathNode> reachableNodes = GetReachableNodes(charX, charY, maxMoveCost);
-            pathfindingVisual.HighlightNodes(reachableNodes, highlightColor);
+
+            pathfindingVisual.HighlightNodes(reachableNodes, Color.blue);
         }
+
+        // ------------------------
+        // ATTACK PHASES (disabled)
+        // ------------------------
+        /*
         else if (phaseType == PhaseType.AttackerFight || phaseType == PhaseType.DefenderFight)
         {
-            highlightColor = Color.red;
-            float attackRangeWorld = 1f;
-
-            // Get the attack range from the PlayerAttack component (set during initialization)
-            if (character.TryGetComponent<PlayerAttack>(out var attackComponent))
-            {
-                attackRangeWorld = attackComponent.attackRange;
-            }
-
-            // Convert world-space attack range to grid-space
-            int attackRangeTiles = Mathf.RoundToInt(attackRangeWorld / pathfinding.GetGrid().GetCellSize());
-            attackRangeTiles = Mathf.Max(1, attackRangeTiles); // never less than 1
-
-            // Get attack nodes using the proper tile range
-            List<PathNode> attackNodes = GetAttackRangeNodes(charX, charY, attackRangeTiles);
-
-            pathfindingVisual.HighlightNodes(attackNodes, highlightColor);
+            // Old code highlighted attack range using pathfinding grid (now commented out)
+            // attackColor = Color.red;
+            // float attackRangeWorld = 1f;
+            // if (character.TryGetComponent<PlayerAttack>(out var attackComponent))
+            // {
+            //     attackRangeWorld = attackComponent.attackRange;
+            // }
+            // int attackRangeTiles = Mathf.RoundToInt(attackRangeWorld / pathfinding.GetGrid().GetCellSize());
+            // attackRangeTiles = Mathf.Max(1, attackRangeTiles);
+            // List<PathNode> attackNodes = GetAttackRangeNodes(charX, charY, attackRangeTiles);
+            // pathfindingVisual.HighlightNodes(attackNodes, attackColor);
         }
+        */
     }
+
 
     private List<PathNode> GetReachableNodes(int startX, int startY, int maxMoveCost)
     {
